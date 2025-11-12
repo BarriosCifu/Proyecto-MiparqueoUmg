@@ -1,21 +1,21 @@
-/*
- * Conexion de sql(es la conexion a la base de datos)
- * 
- */
+
 package hasmap;
+import java.sql.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class ConexionMysql {
-    public static Connection Conectar (){
-    Connection cn=null;
-    try{
-     Class.forName("com.mysql.jdbc.Driver");
-     cn=DriverManager.getConnection("jdbc:mysql://localhost:3306/miparqueoumg","root","")
-    } catch (Exception e){
-        System.out.println(String.valueOf(e));
-    }
-       return cn; 
-    }
-    
+static String url = "jdbc:mysql://localhost:3306/miparqueoumg";
+   static String usuario = "root";
+   static String contraseña ="";
+
+    public static Connection conectar(){
+      try{
+            return DriverManager.getConnection(url, usuario, contraseña);
+        } catch(SQLException e) {
+            System.out.println("Error de conexión: " + e.getMessage());
+            return null; 
+        }
+    }    
 }

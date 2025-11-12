@@ -1,16 +1,15 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Isaias Barrios
  */
-
 package com.mycompany.miparqueoumg;
 
-/**
- *
- * @author barri
- */
-public class MiparqueoUmg {
+import hasmap.ConexionMysql;
 
+public class MiparqueoUmg {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+    Login ingresar = new Login();
+    ingresar.setVisible(true);
+    ConexionMysql dbc = new ConexionMysql();
+    dbc.conectar();
     }
 }
