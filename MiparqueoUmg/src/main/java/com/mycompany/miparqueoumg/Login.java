@@ -3,6 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.mycompany.miparqueoumg;
+import java.awt.HeadlessException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
 /**
  *
@@ -117,6 +123,7 @@ public class Login extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userActionPerformed
@@ -133,21 +140,83 @@ public class Login extends javax.swing.JFrame {
 int intentos = 0;
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 String Varusuario, Varcontraseña;
-   Varusuario = user.getText();
-   Varcontraseña = contra.getText();
-   if (Varusuario.equals("admin")&& Varcontraseña.equals("admin")){
-       JOptionPane.showMessageDialog(null,"Bienvenido" + Varusuario);
-       this.dispose();
-       Parqueo Parqueo = new Parqueo();
-       Parqueo.setVisible(true);
-     }else{
-      intentos++;
-      JOptionPane.showMessageDialog(null,"usuario u contraseña invalidos"+"/n"+"Intentos restantes:"+ intentos + "de 3");
-if (intentos >= 3){
-    JOptionPane.showMessageDialog(null, "Ya alcanzo el limite de intentos, pruebe mas tarde");
-       System.exit(0);
-   }
-    } 
+Varusuario = user.getText().trim();
+Varcontraseña = contra.getText();
+
+// Validar que los campos no estén vacíos
+if (Varusuario.isEmpty() || Varcontraseña.isEmpty()) {
+    JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
+    return;
+}
+
+// VERIFICAR EN BASE DE DATOS
+Connection con = null;
+PreparedStatement pst = null;
+ResultSet rs = null;
+
+try {
+    // Conexión a la base de datos
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    con = DriverManager.getConnection("jdbc:mysql://localhost:3306/miparqueoumg", "root", "");
+    
+    // Buscar usuario en la base de datos
+    String sql = "SELECT * FROM login WHERE usuario = ? AND contraseña = ?";
+    pst = con.prepareStatement(sql);
+    pst.setString(1, Varusuario);
+    pst.setString(2, Varcontraseña);
+    rs = pst.executeQuery();
+    
+    if (rs.next()) {
+        // Login exitoso
+        JOptionPane.showMessageDialog(null, "Bienvenido " + Varusuario, "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
+        intentos = 0; // Reiniciar intentos
+        
+        // Cerrar ventana actual y abrir la siguiente
+        this.dispose();
+        Parqueo parqueo = new Parqueo();
+        parqueo.setVisible(true);
+        
+    } else {
+        // Usuario o contraseña incorrectos
+        intentos++;
+        
+        if (intentos >= 3) {
+            JOptionPane.showMessageDialog(null, 
+                "Ha alcanzado el límite de intentos (3).\nEl programa se cerrará.", 
+                "Acceso Denegado", 
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        } else {
+            JOptionPane.showMessageDialog(null, 
+                """
+                Usuario o contrase\u00f1a inv\u00e1lidos
+                Intentos restantes: """ + (3 - intentos) + " de 3", 
+                "Error de Login", 
+                JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
+} catch (ClassNotFoundException e) {
+    JOptionPane.showMessageDialog(null, 
+        "Error: Driver MySQL no encontrado\n" + e.getMessage(), 
+        "Error de Driver", 
+        JOptionPane.ERROR_MESSAGE);
+} catch (HeadlessException e) {
+    JOptionPane.showMessageDialog(null, 
+        "Error general:\n" + e.getMessage(), 
+        "Error", 
+        JOptionPane.ERROR_MESSAGE);
+}       catch (SQLException ex) {
+            System.getLogger(Login.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } finally {
+    // Cerrar conexiones
+    try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (con != null) con.close();
+    } catch (Exception e) {
+    }
+}
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**

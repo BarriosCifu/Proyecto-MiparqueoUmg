@@ -4,6 +4,15 @@
  */
 package com.mycompany.miparqueoumg;
 
+import hasmap.ConexionMysql;
+import java.awt.HeadlessException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author barri
@@ -29,9 +38,9 @@ public class Registrar extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        user = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
+        contra = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
 
@@ -42,6 +51,11 @@ public class Registrar extends javax.swing.JFrame {
         jLabel2.setText("Contraseña");
 
         jButton1.setText("Registrar");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton2.setText("Volver");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -61,8 +75,8 @@ public class Registrar extends javax.swing.JFrame {
                     .addComponent(jLabel2))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
-                    .addComponent(jTextField1))
+                    .addComponent(contra, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                    .addComponent(user))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGap(165, 165, 165)
@@ -79,11 +93,11 @@ public class Registrar extends javax.swing.JFrame {
                 .addGap(72, 72, 72)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(contra, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(21, 21, 21)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -92,6 +106,7 @@ public class Registrar extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -100,6 +115,102 @@ Login formularioLogin = new Login();
     formularioLogin.setVisible(true);
      this.dispose();       
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+String Varusuario, Varcontraseña;
+Varusuario = user.getText().trim();
+Varcontraseña = contra.getText();
+
+// Validar que los campos no estén vacíos
+if (Varusuario.isEmpty() || Varcontraseña.isEmpty()) {
+    JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
+    return;
+}
+
+// Validar longitud mínima del usuario
+if (Varusuario.length() < 4) {
+    JOptionPane.showMessageDialog(null, "El usuario debe tener al menos 4 caracteres", "Error", JOptionPane.ERROR_MESSAGE);
+    return;
+}
+
+// Validar longitud mínima de la contraseña
+if (Varcontraseña.length() < 6) {
+    JOptionPane.showMessageDialog(null, "La contraseña debe tener al menos 6 caracteres", "Error", JOptionPane.ERROR_MESSAGE);
+    return;
+}
+
+// GUARDAR EN BASE DE DATOS
+Connection con = null;
+PreparedStatement pst = null;
+ResultSet rs = null;
+
+try {
+    // Conexión a la base de datos directamente para ver el error
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    con = DriverManager.getConnection("jdbc:mysql://localhost:3306/miparqueoumg", "root", "");
+    
+    System.out.println("Conexión exitosa"); // Para debug
+    
+    // Verificar si el usuario ya existe
+    String sqlVerificar = "SELECT * FROM login WHERE usuario = ?";
+    pst = con.prepareStatement(sqlVerificar);
+    pst.setString(1, Varusuario);
+    rs = pst.executeQuery();
+    
+    if (rs.next()) {
+        JOptionPane.showMessageDialog(null, "Este usuario ya existe. Elija otro nombre de usuario", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    // Insertar nuevo usuario
+    String sqlInsertar = "INSERT INTO login (usuario, contraseña) VALUES (?, ?)";
+    pst = con.prepareStatement(sqlInsertar);
+    pst.setString(1, Varusuario);
+    pst.setString(2, Varcontraseña); // IMPORTANTE: En producción, encripta la contraseña
+    
+    int resultado = pst.executeUpdate();
+    
+    if (resultado > 0) {
+        JOptionPane.showMessageDialog(null, 
+            "Usuario registrado exitosamente\nUsuario: " + Varusuario, 
+            "Registro Exitoso", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // Limpiar campos
+        user.setText("");
+        contra.setText("");
+        
+        // Opcional: Redirigir al login
+        this.dispose();
+        Login login = new Login();
+        login.setVisible(true);
+    }
+    
+} catch (ClassNotFoundException e) {
+    JOptionPane.showMessageDialog(null, 
+        "Error: Driver MySQL no encontrado\n" + e.getMessage() + "\n\nAgrega mysql-connector-j al pom.xml", 
+        "Error de Driver", 
+        JOptionPane.ERROR_MESSAGE);
+} catch (SQLException e) {
+    JOptionPane.showMessageDialog(null, 
+        "Error SQL:\n" + e.getMessage() + "\n\nCódigo: " + e.getErrorCode(), 
+        "Error de Base de Datos", 
+        JOptionPane.ERROR_MESSAGE);
+} catch (HeadlessException e) {
+    JOptionPane.showMessageDialog(null, 
+        "Error general:\n" + e.getMessage(), 
+        "Error", 
+        JOptionPane.ERROR_MESSAGE);
+} finally {
+    // Cerrar conexiones
+    try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (con != null) con.close();
+    } catch (SQLException e) {
+    }
+}
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -127,11 +238,11 @@ Login formularioLogin = new Login();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField contra;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField user;
     // End of variables declaration//GEN-END:variables
 }
