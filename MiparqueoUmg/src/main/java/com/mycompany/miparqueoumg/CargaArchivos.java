@@ -162,6 +162,11 @@ public class CargaArchivos extends javax.swing.JFrame {
 
         cargar3.setText("Cargar");
         cargar3.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(0, 255, 255), new java.awt.Color(0, 255, 204), new java.awt.Color(153, 0, 0), new java.awt.Color(0, 153, 153)));
+        cargar3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cargar3ActionPerformed(evt);
+            }
+        });
 
         Regresar.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         Regresar.setText("Regresar");
@@ -385,13 +390,12 @@ List<String[]> datos = new ArrayList<>();
     private void cargarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarActionPerformed
 DefaultTableModel modelo = (DefaultTableModel) areas.getModel();
 int totalFilas = modelo.getRowCount();
-
 if (totalFilas == 0) {
-    JOptionPane.showMessageDialog(this, 
-            "La tabla está vacía. No hay nada que cargar.", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-    return;
+JOptionPane.showMessageDialog(this, 
+"La tabla está vacía. No hay nada que cargar.", 
+"Error", 
+JOptionPane.ERROR_MESSAGE);
+return;
 }
 // 2. Variables de Conexión (Arregla 'cannot find symbol: url', etc.)
 // ⚠️ ¡DEBES CAMBIAR LA CONTRASEÑA!
@@ -404,123 +408,27 @@ PreparedStatement ps = null;
 try {
     // 4. Conectar
     con = DriverManager.getConnection(url, usuario, contrasena);
-    con.setAutoCommit(false); // Para ejecutar como lote
-    
+    con.setAutoCommit(false); // Para ejecutar como lote  
     // 5. Preparar la consulta
     ps = con.prepareStatement(sql);
-
     // 6. Recorrer la JTable
-    for (int i = 0; i < totalFilas; i++) {
-        
+    for (int i = 0; i < totalFilas; i++) {       
         // Obtener datos de la JTable
         String idStr = modelo.getValueAt(i, 0).toString();
         String nombre = modelo.getValueAt(i, 1).toString();
         String capacidadStr = modelo.getValueAt(i, 2).toString();
         String tipoVehiculo = modelo.getValueAt(i, 3).toString();
-
         // 7. Convertir datos (Arregla 'NumberFormatException')
         int capacidad = Integer.parseInt(capacidadStr); // Solo convertimos capacidad
-        
         // 8. Asignar valores a la consulta (?)
         ps.setString(1, idStr); // ⬅️ CORREGIDO: Usamos setString para "A01"
         ps.setString(2, nombre);
         ps.setInt(3, capacidad);
-        ps.setString(4, tipoVehiculo);
-        
-        ps.addBatch(); // Añadir al lote
-    }
-
-    // 10. Ejecutar todo el lote
-    int[] resultados = ps.executeBatch();
-    
-    // 11. Confirmar la transacción
-    con.commit(); 
-
-    JOptionPane.showMessageDialog(this, 
-            "Se cargaron exitosamente " + resultados.length + " registros.", 
-            "Carga Exitosa", 
-            JOptionPane.INFORMATION_MESSAGE);
-
-} catch (NumberFormatException e) {
-    // Error si "capacidad" no es un número
-    JOptionPane.showMessageDialog(this, 
-            "Error en los datos de la tabla.\n'capacidad' debe ser un número.\n" + e.getMessage(), 
-            "Error de Formato", 
-            JOptionPane.ERROR_MESSAGE);
-            
-} catch (SQLException e) {
-    // Error de Base de Datos (conexión, consulta, etc.)
-    JOptionPane.showMessageDialog(this, 
-            "Error al guardar en la base de datos:\n" + e.getMessage(), 
-            "Error de SQL", 
-            JOptionPane.ERROR_MESSAGE);
-    
-    // Si algo falló, revertir la transacción
-    try {
-        if (con != null) con.rollback();
-    } catch (SQLException ex) {
-        // Muestra error en consola
-        
-    }
-            
-} finally {
-    // 12. Cerrar la conexión (MUY IMPORTANTE)
-    try {
-        if (ps != null) ps.close();
-        if (con != null) {
-            con.setAutoCommit(true); 
-            con.close();
-        }
-    } catch (SQLException e) {
-        // Muestra error en consola
-        
-    }
-}
-    }//GEN-LAST:event_cargarActionPerformed
-
-    private void cargar2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargar2ActionPerformed
-      DefaultTableModel modelo = (DefaultTableModel) spots.getModel();
-int totalFilas = modelo.getRowCount();
-
-if (totalFilas == 0) {
-    JOptionPane.showMessageDialog(this, 
-            "La tabla está vacía. No hay nada que cargar.", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-    return;
-}
-// 2. Variables de Conexión (Arregla 'cannot find symbol: url', etc.)
-// ⚠️ ¡DEBES CAMBIAR LA CONTRASEÑA!
-String url = "jdbc:mysql://localhost:3306/miparqueoumg";
-String usuario = "root"; // O tu usuario de MySQL
-String contrasena = ""; // ⬅️ PON TU CONTRASEÑA AQUÍ
-String sql = "INSERT INTO `spot` (`spot-id`, `area-id`, `tipo-vehiculo`, `status`) VALUES (?, ?, ?, ?)";
-Connection con = null;
-PreparedStatement ps = null;
-try {
-    // 4. Conectar
-    con = DriverManager.getConnection(url, usuario, contrasena);
-    con.setAutoCommit(false); // Para ejecutar como lote
-    // 5. Preparar la consulta
-    ps = con.prepareStatement(sql);
-    // 6. Recorrer la JTable
-    for (int i = 0; i < totalFilas; i++) {
-        // Obtener datos de la JTable
-        String spotid = modelo.getValueAt(i, 0).toString();
-        String areaid = modelo.getValueAt(i, 1).toString();
-        String tipovehiculo = modelo.getValueAt(i, 2).toString();
-        String status = modelo.getValueAt(i, 3).toString();
-        // 7. Convertir datos (Arregla 'NumberFormatException')
-        // Solo convertimos capacidad     
-        // 8. Asignar valores a la consulta (?)
-        ps.setString(1, spotid); // ⬅️ CORREGIDO: Usamos setString para "A01"
-        ps.setString(2, areaid);
-        ps.setString(3, tipovehiculo);
-        ps.setString(4, status);       
+        ps.setString(4, tipoVehiculo);       
         ps.addBatch(); // Añadir al lote
     }
     // 10. Ejecutar todo el lote
-    int[] resultados = ps.executeBatch();
+    int[] resultados = ps.executeBatch();   
     // 11. Confirmar la transacción
     con.commit(); 
     JOptionPane.showMessageDialog(this, 
@@ -532,7 +440,7 @@ try {
     JOptionPane.showMessageDialog(this, 
             "Error en los datos de la tabla.\n'capacidad' debe ser un número.\n" + e.getMessage(), 
             "Error de Formato", 
-            JOptionPane.ERROR_MESSAGE);          
+            JOptionPane.ERROR_MESSAGE); 
 } catch (SQLException e) {
     // Error de Base de Datos (conexión, consulta, etc.)
     JOptionPane.showMessageDialog(this, 
@@ -544,7 +452,7 @@ try {
         if (con != null) con.rollback();
     } catch (SQLException ex) {
         // Muestra error en consola   
-    }         
+    }     
 } finally {
     // 12. Cerrar la conexión (MUY IMPORTANTE)
     try {
@@ -554,10 +462,134 @@ try {
             con.close();
         }
     } catch (SQLException e) {
-        // Muestra error en consola       
+        // Muestra error en consola
+    }
+}
+    }//GEN-LAST:event_cargarActionPerformed
+
+    private void cargar2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargar2ActionPerformed
+DefaultTableModel modelo = (DefaultTableModel) spots.getModel();
+int totalFilas = modelo.getRowCount();
+if (totalFilas == 0) {
+JOptionPane.showMessageDialog(this, 
+"La tabla está vacía. No hay nada que cargar.", 
+"Error", 
+JOptionPane.ERROR_MESSAGE);
+return;
+}
+String url = "jdbc:mysql://localhost:3306/miparqueoumg";
+String usuario = "root"; 
+String contrasena = ""; 
+String sql = "INSERT INTO `spot` (`spot-id`, `area-id`, `tipo-vehiculo`, `status`) VALUES (?, ?, ?, ?)";
+Connection con = null;
+PreparedStatement ps = null;
+try {
+con = DriverManager.getConnection(url, usuario, contrasena);
+con.setAutoCommit(false);
+ps = con.prepareStatement(sql);
+for (int i = 0; i < totalFilas; i++) {
+        String spotid = modelo.getValueAt(i, 0).toString();
+        String areaid = modelo.getValueAt(i, 1).toString();
+        String tipovehiculo = modelo.getValueAt(i, 2).toString();
+        String status = modelo.getValueAt(i, 3).toString();
+        ps.setString(1, spotid); 
+        ps.setString(2, areaid);
+        ps.setString(3, tipovehiculo);
+        ps.setString(4, status);       
+        ps.addBatch(); 
+    }
+    int[] resultados = ps.executeBatch();
+    con.commit(); 
+    JOptionPane.showMessageDialog(this, 
+            "Se cargaron exitosamente " + resultados.length + " registros.", 
+            "Carga Exitosa", 
+            JOptionPane.INFORMATION_MESSAGE);
+} catch (NumberFormatException e) {
+    JOptionPane.showMessageDialog(this, 
+            "Error en los datos de la tabla.\n'capacidad' debe ser un número.\n" + e.getMessage(), 
+            "Error de Formato", 
+            JOptionPane.ERROR_MESSAGE);          
+} catch (SQLException e) {
+    JOptionPane.showMessageDialog(this, 
+            "Error al guardar en la base de datos:\n" + e.getMessage(), 
+            "Error de SQL", 
+            JOptionPane.ERROR_MESSAGE);
+    try {
+        if (con != null) con.rollback();
+    } catch (SQLException ex) {  
+    }         
+} finally {
+    try {
+        if (ps != null) ps.close();
+        if (con != null) {
+            con.setAutoCommit(true); 
+            con.close();
+        }
+    } catch (SQLException e) {       
     }
 }
     }//GEN-LAST:event_cargar2ActionPerformed
+
+    private void cargar3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargar3ActionPerformed
+DefaultTableModel modelo = (DefaultTableModel) vehiculos.getModel();
+int totalFilas = modelo.getRowCount();
+if (totalFilas == 0) {
+JOptionPane.showMessageDialog(this, 
+"La tabla está vacía. No hay nada que cargar.", 
+"Error", 
+JOptionPane.ERROR_MESSAGE);
+return;
+}
+String url = "jdbc:mysql://localhost:3306/miparqueoumg";
+String usuario = "root";
+String contrasena = "";
+String sql = "INSERT INTO `vehiculos` (`placa`, `tipo-vehiculo`, `tipo-area`) VALUES (?, ?, ?)";
+Connection con = null;
+PreparedStatement ps = null;
+try {
+    con = DriverManager.getConnection(url, usuario, contrasena);
+    con.setAutoCommit(false);
+    ps = con.prepareStatement(sql);
+    for (int i = 0; i < totalFilas; i++) {        
+        String placa = modelo.getValueAt(i, 0).toString();
+        String tipovehiculo = modelo.getValueAt(i, 1).toString();
+        String tipoarea = modelo.getValueAt(i, 2).toString();
+        ps.setString(1, placa); 
+        ps.setString(2, tipovehiculo);
+        ps.setString(3, tipoarea);
+        ps.addBatch();
+    }
+    int[] resultados = ps.executeBatch();
+    con.commit(); 
+    JOptionPane.showMessageDialog(this, 
+            "Se cargaron exitosamente " + resultados.length + " registros.", 
+            "Carga Exitosa", 
+            JOptionPane.INFORMATION_MESSAGE);
+} catch (NumberFormatException e) {
+    JOptionPane.showMessageDialog(this, 
+            "Error en los datos de la tabla.\n'capacidad' debe ser un número.\n" + e.getMessage(), 
+            "Error de Formato", 
+            JOptionPane.ERROR_MESSAGE);            
+} catch (SQLException e) {
+    JOptionPane.showMessageDialog(this, 
+            "Error al guardar en la base de datos:\n" + e.getMessage(), 
+            "Error de SQL", 
+            JOptionPane.ERROR_MESSAGE);
+    try {
+        if (con != null) con.rollback();
+    } catch (SQLException ex) {    
+    }       
+} finally {
+    try {
+        if (ps != null) ps.close();
+        if (con != null) {
+            con.setAutoCommit(true); 
+            con.close();
+        }
+    } catch (SQLException e) {    
+    }
+}
+    }//GEN-LAST:event_cargar3ActionPerformed
 
     /**
      * @param args the command line arguments
