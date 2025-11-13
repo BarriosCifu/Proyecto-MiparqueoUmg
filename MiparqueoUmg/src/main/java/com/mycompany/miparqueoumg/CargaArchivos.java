@@ -1,5 +1,6 @@
 package com.mycompany.miparqueoumg;
-
+import java.io.*;
+import java.util.*;
 import java.util.List;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -43,14 +44,27 @@ public class CargaArchivos extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        areas = new javax.swing.JTable();
         carga = new javax.swing.JButton();
         guardar = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        spots = new javax.swing.JTable();
+        carga2 = new javax.swing.JButton();
+        guardar2 = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        vehiculos = new javax.swing.JTable();
+        jLabel3 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        Regresar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setForeground(new java.awt.Color(255, 255, 255));
+        setName("Archivos"); // NOI18N
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        areas.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -61,7 +75,7 @@ public class CargaArchivos extends javax.swing.JFrame {
                 "area-id", "nombre", "capacidad", "tipo-vehiculo"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(areas);
 
         carga.setText("Cargar ");
         carga.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(0, 255, 255), new java.awt.Color(0, 204, 204), new java.awt.Color(204, 0, 0), new java.awt.Color(153, 255, 255)));
@@ -78,21 +92,103 @@ public class CargaArchivos extends javax.swing.JFrame {
         jLabel1.setText("AREAS");
         jLabel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel2.setText("SPOTS");
+        jLabel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        spots.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "spot-id", "area-id", "tipo-vehiculo", "status"
+            }
+        ));
+        jScrollPane2.setViewportView(spots);
+
+        carga2.setText("Cargar");
+        carga2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(153, 255, 255), new java.awt.Color(51, 255, 204), new java.awt.Color(204, 0, 51), new java.awt.Color(0, 153, 153)));
+        carga2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                carga2ActionPerformed(evt);
+            }
+        });
+
+        guardar2.setText("Guardar");
+        guardar2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(51, 255, 255), new java.awt.Color(51, 255, 204), new java.awt.Color(204, 0, 0), new java.awt.Color(102, 255, 255)));
+
+        vehiculos.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
+            },
+            new String [] {
+                "placa", "tipo-vehiculo", "tipo-area"
+            }
+        ));
+        jScrollPane3.setViewportView(vehiculos);
+
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel3.setText("VEHICULOS");
+        jLabel3.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        jButton1.setText("Cargar");
+        jButton1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(51, 255, 255), new java.awt.Color(0, 255, 204), new java.awt.Color(153, 51, 0), new java.awt.Color(0, 153, 153)));
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setText("Guardar");
+        jButton2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(0, 255, 255), new java.awt.Color(0, 255, 204), new java.awt.Color(153, 0, 0), new java.awt.Color(0, 153, 153)));
+
+        Regresar.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        Regresar.setText("Regresar");
+        Regresar.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED, new java.awt.Color(153, 153, 0), new java.awt.Color(51, 204, 0), new java.awt.Color(0, 0, 153), new java.awt.Color(0, 153, 153)));
+        Regresar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RegresarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(35, 35, 35)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 543, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(35, 35, 35)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(carga, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(guardar, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(248, Short.MAX_VALUE))
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 543, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(carga, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(guardar, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(jLabel2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
+                                    .addComponent(jScrollPane2))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(carga2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(guardar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(302, 302, 302)
+                        .addComponent(Regresar, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(59, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -101,20 +197,91 @@ public class CargaArchivos extends javax.swing.JFrame {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
                         .addComponent(carga)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(guardar, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(430, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(carga2, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(guardar2, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(21, 21, 21)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addComponent(jButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
+                .addComponent(Regresar, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(14, 14, 14))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
+ @SuppressWarnings("unchecked")
     private void cargaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargaActionPerformed
-        JFileChooser chooser = new JFileChooser();
-chooser.setDialogTitle("Seleccionar archivo de inscritos");
+ JFileChooser chooser = new JFileChooser();
+chooser.setDialogTitle("Seleccionar archivo de areas");
+// Mostrar el cuadro de diálogo
+int resultado = chooser.showOpenDialog(this);
+// Si el usuario presiona "Aceptar"
+if (resultado == JFileChooser.APPROVE_OPTION) {
+String ruta = chooser.getSelectedFile().getAbsolutePath(); // ruta del archivo elegido
+    // Lista donde guardaremos los datos leídos
+    List<String[]> datos;
+            datos = new ArrayList<>();
+//Ver archivo
+    try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
+        String linea;
+        while ((linea = br.readLine()) != null) {
+            if (linea.trim().isEmpty()) continue;
+            String[] partes = linea.split("//|");
+            if (partes.length == 4) {
+                datos.add(new String[]{
+                    partes[0].trim(),
+                    partes[1].trim(),
+                    partes[2].trim(),
+                    partes[3].trim()
+                });
+            }
+        }
+    } catch (IOException e) {
+        JOptionPane.showMessageDialog(this,
+                "Error al leer el archivo:\n" + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Mostrar en la tabla
+    DefaultTableModel modelo;
+            modelo = new DefaultTableModel(
+                    new String[]{"area-id", "nombre", "capacidad", "tipo-vehiculo"}, 0
+            );
+
+    for (String[] fila : datos) {
+        modelo.addRow(fila);
+    }
+
+    CargaArchivos.setModel(modelo);
+    JOptionPane.showMessageDialog(this, "Se cargaron " + datos.size() + " areas.");
+}
+    }//GEN-LAST:event_cargaActionPerformed
+
+    private void carga2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_carga2ActionPerformed
+                    JFileChooser chooser = new JFileChooser();
+chooser.setDialogTitle("Seleccionar archivo de spot");
 
 // Mostrar el cuadro de diálogo
 int resultado = chooser.showOpenDialog(this);
@@ -151,7 +318,7 @@ if (resultado == JFileChooser.APPROVE_OPTION) {
     // Mostrar en la tabla
     DefaultTableModel modelo;
             modelo = new DefaultTableModel(
-                    new String[]{"areas-id", "nombre", "capacidad", "tipo-vehiculo"}, 0
+                    new String[]{"spot-id", "area-id", "tipo-vehiculo", "tipo-status"}, 0
             );
 
     for (String[] fila : datos) {
@@ -159,9 +326,66 @@ if (resultado == JFileChooser.APPROVE_OPTION) {
     }
 
     CargaArchivos.setModel(modelo);
-    JOptionPane.showMessageDialog(this, "Se cargaron " + datos.size() + " inscritos.");
+    JOptionPane.showMessageDialog(this, "Se cargaron " + datos.size() + " spot.");
 }
-    }//GEN-LAST:event_cargaActionPerformed
+    }//GEN-LAST:event_carga2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+JFileChooser chooser = new JFileChooser();
+chooser.setDialogTitle("Seleccionar archivo de vehiculos");
+
+// Mostrar el cuadro de diálogo
+int resultado = chooser.showOpenDialog(this);
+
+// Si el usuario presiona "Aceptar"
+if (resultado == JFileChooser.APPROVE_OPTION) {
+    String ruta = chooser.getSelectedFile().getAbsolutePath(); // ruta del archivo elegido
+
+    // Lista donde guardaremos los datos leídos
+    List<String[]> datos;
+            datos = new ArrayList<>();
+//Ver archivo
+    try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
+        String linea;
+        while ((linea = br.readLine()) != null) {
+            if (linea.trim().isEmpty()) continue;
+            String[] partes = linea.split("\\|");
+            if (partes.length == 3) {
+                datos.add(new String[]{
+                    partes[0].trim(),
+                    partes[1].trim(),
+                    partes[2].trim()
+                   
+                });
+            }
+        }
+    } catch (IOException e) {
+        JOptionPane.showMessageDialog(this,
+                "Error al leer el archivo:\n" + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Mostrar en la tabla
+    DefaultTableModel modelo;
+            modelo = new DefaultTableModel(
+                    new String[]{"placa","tipo-vehiculo", "tipo-area"}, 0
+            );
+
+    for (String[] fila : datos) {
+        modelo.addRow(fila);
+    }
+
+    CargaArchivos.setModel(modelo);
+    JOptionPane.showMessageDialog(this, "Se cargaron " + datos.size() + " vehiculos.");
+}
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void RegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegresarActionPerformed
+     Parqueo Parqueo = new Parqueo ();
+     Parqueo.setVisible (true);
+     this.dispose();
+    }//GEN-LAST:event_RegresarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -189,10 +413,21 @@ if (resultado == JFileChooser.APPROVE_OPTION) {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton Regresar;
+    private javax.swing.JTable areas;
     private javax.swing.JButton carga;
+    private javax.swing.JButton carga2;
     private javax.swing.JButton guardar;
+    private javax.swing.JButton guardar2;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTable spots;
+    private javax.swing.JTable vehiculos;
     // End of variables declaration//GEN-END:variables
 }
