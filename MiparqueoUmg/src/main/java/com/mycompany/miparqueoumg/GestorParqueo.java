@@ -1,11 +1,13 @@
 package com.mycompany.miparqueoumg;
-
 import hasmap.ConexionMysql;
 import com.mycompany.miparqueoumg.Ticket;
 import java.sql.Connection;
+import java.time.temporal.ChronoUnit;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import javax.swing.JLabel;
 
 public class GestorParqueo {
@@ -17,63 +19,109 @@ public class GestorParqueo {
     
     /**
      * Este es el método que llamará tu botón "Registrar Ingreso".
+     * @param placa
+     * @param areaNombre
+     * @return 
      */
-    public String registrarIngreso(String placa, String areaNombre) {      
+    public String registrarIngreso(String placa, String areaNombre) {
+        
         // --- 1. Obtener el modo de tarifa actual ---
         String modoTarifaActual = "FLAT"; // O "VARIABLE"
-        
-        // --- 2. Convertir nombre de área (ej: "MOTOS") a ID (ej: "A01") ---
+
+        // --- 2. Convertir nombre de área
         String areaId = convertirAreaNombreAId(areaNombre);
         if (areaId == null) {
             return "Error: El área seleccionada no es válida.";
         }
-        
+
         // --- 3. Validar Ocupación ---
         if (estaAreaLlena(areaId)) {
             return "Error: El área de " + areaNombre + " está llena.";
         }
-        
-        // --- 4. Validar Reingreso ---
+
+        // --- 4. Validar si YA EXISTE ---
         Ticket ticketExistente = buscarTicketActivo(placa);
         if (ticketExistente != null) {
-            // Lógica de reingreso para FLAT
-            if (modoTarifaActual.equals("FLAT") && ticketExistente.getModo().equals("FLAT")) {
-                // Comprobar si es del mismo día
-                if (ticketExistente.getFechaIngreso().toLocalDate().isEqual(java.time.LocalDate.now())) {
-                    return "Reingreso (Tarifa Plana): Bienvenido de nuevo.";
-                }
-            }
-            
-            // Lógica de reingreso para VARIABLE
-            if (modoTarifaActual.equals("VARIABLE") && ticketExistente.getEstado().equals("ACTIVO")) {
-                return "Reingreso (Tarifa Variable): Ya tiene un ticket activo.";
-            }
+            // SI SE ENCUENTRA un ticket, se rechaza el INGRESO.
+            return "Error: Esta placa ya tiene un ticket activo. Use el botón 'Reingreso'.";
         }
-        
+
         // --- 5. Crear Ticket Nuevo ---
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
         // --- 6. Guardar en Base de Datos ---
         String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection con = conexion.getConnection();
+        
+        try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, nuevoTicket.getPlaca());
             ps.setString(2, nuevoTicket.getAreaId());
-            ps.setObject(3, nuevoTicket.getFechaIngreso());
+            ps.setObject(3, nuevoTicket.getFechaIngreso()); 
             ps.setString(4, nuevoTicket.getModo());
             ps.setDouble(5, nuevoTicket.getMonto());
-            ps.setString(6, nuevoTicket.getEstado());  
+            ps.setString(6, nuevoTicket.getEstado());
+            
             ps.executeUpdate();
             
-            return "Ingreso Registrado (Modo " + modoTarifaActual + "). Monto: Q" + nuevoTicket.getMonto();  
+            return "Ingreso Registrado (Modo " + modoTarifaActual + "). Monto: Q" + nuevoTicket.getMonto();
+            
         } catch (Exception e) {
             return "Error al guardar en la base de datos: " + e.getMessage();
         }
     }
     
     /**
+     * Valida un reingreso basado en las reglas del PDF.
+     * Este método es llamado por el botón "Reingreso".
+     * @param placa
+     * @return 
+     */
+    public String registrarReingreso(String placa) {
+        // 1. Buscar el ticket
+        Ticket ticketExistente = buscarTicketActivo(placa);
+        
+        // 2. Validar si NO se encontró
+        if (ticketExistente == null) {
+            return "Error: No se encontró ticket activo para la placa. Use el botón 'Ingreso'.";
+        }
+        
+        // 3. Obtener modo de tarifa actual (eventualmente de un config)
+        String modoTarifaActual = "FLAT"; // O "VARIABLE"
+        
+        // 4. Aplicar reglas de reingreso del PDF
+        
+        // REGLA PARA TARIFA PLANA
+        if (modoTarifaActual.equals("FLAT")) {
+            // Comprobar que el ticket sea FLAT y del mismo día
+            if (ticketExistente.getModo().equals("FLAT") && 
+                ticketExistente.getFechaIngreso().toLocalDate().isEqual(LocalDate.now())) {
+                // ¡Éxito! Se permite el reingreso
+                return "Reingreso (Tarifa Plana) PERMITIDO. (Ticket del día)";
+            } else {
+                return "Rechazado: El ticket (PLANA) no es válido para reingreso hoy.";
+            }
+        }
+        
+        // REGLA PARA TARIFA VARIABLE
+        if (modoTarifaActual.equals("VARIABLE")) {
+            // Comprobar que el ticket (VARIABLE) siga "ACTIVO"
+            if (ticketExistente.getModo().equals("VARIABLE") && 
+                ticketExistente.getEstado().equals("ACTIVO")) {
+                // ¡Éxito! El ticket sigue abierto
+                return "Reingreso (Tarifa Variable) PERMITIDO. (Ticket sigue activo)";
+            } else {
+                return "Rechazado: El ticket (VARIABLE) no está activo.";
+            }
+        }
+        
+        return "Error: Modo de tarifa desconocido.";
+    }
+    
+    /**
      * Este es el método que llamará tu botón "Registrar Salida".
+     * @param placa
+     * @return 
      */
     public String registrarSalida(String placa) {
         return "Lógica de salida aún no implementada.";
@@ -91,6 +139,9 @@ public class GestorParqueo {
     /**
      * Actualiza los labels de ocupación en el Dashboard.
      * Este método consulta la BD y actualiza los 3 JLabels.
+     * @param lblMotos
+     * @param lblEst
+     * @param lblCat
      */
     public void actualizarLabelsOcupacion(JLabel lblMotos, JLabel lblEst, JLabel lblCat) {
         // Obtenemos los datos para MOTOS (A01)
@@ -107,10 +158,6 @@ public class GestorParqueo {
         int capCatedraticos = getCapacidadArea("A03");
         int ocupCatedraticos = getOcupacionActual("A03");
         lblCat.setText("Catedráticos: " + ocupCatedraticos + " / " + capCatedraticos);
-        
-        // (Opcional) Puedes añadir lógica para cambiar el color si está lleno
-        // Ej: if (ocupMotos >= capMotos) { lblMotos.setForeground(Color.RED); }
-        //     else { lblMotos.setForeground(Color.BLACK); }
     }
     
     /**
@@ -145,7 +192,7 @@ public class GestorParqueo {
         String sql = "SELECT COUNT(*) FROM ticket " +
                      "WHERE area_id = ? " +
                      "AND estado != 'CERRADO' " +
-                     "AND DATE(fecha_ingreso) = CURDATE()"; // CURDATE() es MySQL para "hoy"
+                     "AND DATE(fecha_ingreso) = CURDATE()";
         
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -153,7 +200,7 @@ public class GestorParqueo {
             ps.setString(1, areaId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // Devuelve el primer (y único) valor del COUNT
+                    return rs.getInt(1);
                 }
             }
         } catch (Exception e) {
@@ -181,29 +228,51 @@ public class GestorParqueo {
         return ocupacion >= capacidad;
     }
     
+    /**
+     * Busca un ticket que no esté CERRADO para una placa.
+     * Devuelve un objeto Ticket si lo encuentra, o null si no.
+     */
     private Ticket buscarTicketActivo(String placa) {
-        String sql = "SELECT * FROM ticket WHERE placa = ? AND estado IN ('ACTIVO', 'PAGADO') ORDER BY fecha_ingreso DESC LIMIT 1";
+        
+        // Buscamos tickets "ACTIVO" (variable) o "PAGADO" (plana del día de hoy)
+        String sql = "SELECT * FROM ticket WHERE placa = ? AND estado != 'CERRADO' " +
+                     "ORDER BY fecha_ingreso DESC LIMIT 1";
+        
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, placa);
-            ResultSet rs = ps.executeQuery();
             
-            if (rs.next()) {
-                Ticket ticket = new Ticket(
-                    rs.getString("placa"),
-                    rs.getString("area_id"),
-                    rs.getString("modo")
-                );
-                ticket.setId(rs.getInt("id"));
-                ticket.setFechaIngreso(rs.getObject("fecha_ingreso", LocalDateTime.class));
-                ticket.setMonto(rs.getDouble("monto"));
-                ticket.setEstado(rs.getString("estado"));
-                return ticket;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // ¡Encontramos un ticket! Lo re-creamos usando el constructor completo
+                    
+                    int id = rs.getInt("id");
+                    String areaId = rs.getString("area_id");
+                    
+                    // Convertir de SQL Timestamp a Java LocalDateTime
+                    LocalDateTime fechaIngreso = rs.getTimestamp("fecha_ingreso").toLocalDateTime();
+                    
+                    // La fecha de salida puede ser NULL en la BD
+                    LocalDateTime fechaSalida = null;
+                    Timestamp tsSalida = rs.getTimestamp("fecha_salida");
+                    if (tsSalida != null) {
+                        fechaSalida = tsSalida.toLocalDateTime();
+                    }
+                    
+                    String modo = rs.getString("modo");
+                    double monto = rs.getDouble("monto");
+                    String estado = rs.getString("estado");
+                    
+                    // Usamos el constructor completo que añadimos a Ticket
+                    return new Ticket(id, placa, areaId, fechaIngreso, fechaSalida, modo, monto, estado);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al buscar ticket: " + e.getMessage());
         }
+        
+        // Si no se encontró nada o hubo un error
         return null;
     }
 }

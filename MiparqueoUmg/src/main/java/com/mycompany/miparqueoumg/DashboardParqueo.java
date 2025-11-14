@@ -31,7 +31,7 @@ jComboBox1.addItem("Estudiantes");
      actualizarOcupacion();
     }
     // Método para actualizar la ocupación
-    public void actualizarOcupacion() {
+    public final void actualizarOcupacion() {
         // Aquí actualizas los labels según la ocupación
         // Ejemplo:
         jLabel3.setText("Motos: " + gestor.getOcupacionMotos() + "/120");
@@ -57,6 +57,7 @@ jComboBox1.addItem("Estudiantes");
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jComboBox1 = new javax.swing.JComboBox<>();
+        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setName(""); // NOI18N
@@ -85,6 +86,13 @@ jComboBox1.addItem("Estudiantes");
         jLabel5.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         jLabel5.setText("Catedraticos: 0/60");
 
+        jButton3.setText("Reingreso");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -108,7 +116,8 @@ jComboBox1.addItem("Estudiantes");
                             .addComponent(jLabel3)
                             .addComponent(jLabel4)
                             .addComponent(jLabel5)))
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(65, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -131,11 +140,13 @@ jComboBox1.addItem("Estudiantes");
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
-                .addGap(20, 20, 20)
+                .addGap(30, 30, 30)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(86, Short.MAX_VALUE))
+                .addGap(29, 29, 29))
         );
 
         pack();
@@ -162,6 +173,25 @@ jComboBox1.addItem("Estudiantes");
     actualizarOcupacion();
     jTextField1.setText(""); // Limpiar la placa
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+// 1. Obtener datos de la UI
+String placa = jTextField1.getText().toUpperCase().trim();
+    // 2. Validar que la placa no esté vacía
+ if (placa.isEmpty()) {
+JOptionPane.showMessageDialog(this, "Debe ingresar una placa.");
+return;
+    }
+// 3. Llamar al cerebro (al nuevo método)
+ String respuesta = gestor.registrarReingreso(placa); 
+// 4. Mostrar respuesta
+JOptionPane.showMessageDialog(this, respuesta); 
+    // 5. Opcional: Limpiar la placa
+    // txtPlaca.setText(""); 
+    // NOTA: No llamamos a actualizarOcupacion() aquí,
+    // porque un reingreso no cambia el conteo de ocupación.
+
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -191,6 +221,7 @@ jComboBox1.addItem("Estudiantes");
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

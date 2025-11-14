@@ -3,6 +3,7 @@ com\mycompany\miparqueoumg\Registrar$1.class
 com\mycompany\miparqueoumg\MiparqueoUmg.class
 com\mycompany\miparqueoumg\Login$2.class
 com\mycompany\miparqueoumg\CargaArchivos$6.class
+com\mycompany\miparqueoumg\DashboardParqueo$2.class
 com\mycompany\miparqueoumg\GestorParqueo.class
 hasmap\ConexionMysql.class
 com\mycompany\miparqueoumg\Parqueo.class
