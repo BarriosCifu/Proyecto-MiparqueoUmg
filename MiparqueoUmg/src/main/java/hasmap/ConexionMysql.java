@@ -18,4 +18,8 @@ static String url = "jdbc:mysql://localhost:3306/miparqueoumg";
             return null; 
         }
     }    
+
+    public Connection getConnection() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

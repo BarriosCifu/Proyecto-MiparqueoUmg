@@ -11,7 +11,6 @@ import javax.swing.JFrame;
 public class Parqueo extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Parqueo.class.getName());
-    private DashboardParqueo DashboardParqueo;
 
     /**
      * Creates new form Parqueo
@@ -123,9 +122,9 @@ CargaArchivos.setVisible(true);
     }//GEN-LAST:event_archivosActionPerformed
 
     private void panelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panelActionPerformed
-     DashboardParqueo = new DashboardParqueo();
-            DashboardParqueo.setVisible(true);
-            this.dispose();
+DashboardParqueo DashboardParqueo = new DashboardParqueo ();
+DashboardParqueo.setVisible(true);
+this.dispose();
     }//GEN-LAST:event_panelActionPerformed
 
     /**
