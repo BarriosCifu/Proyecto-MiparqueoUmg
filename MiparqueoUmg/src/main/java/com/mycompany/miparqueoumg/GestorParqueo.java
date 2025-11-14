@@ -1,12 +1,12 @@
 package com.mycompany.miparqueoumg;
-// ... (otros imports)
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import java.io.File;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter; // Para formatear la fecha
+import java.time.format.DateTimeFormatter;
 import hasmap.ConexionMysql;
 import com.mycompany.miparqueoumg.Ticket;
 import java.sql.Connection;
@@ -16,48 +16,46 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import javax.swing.JLabel;
+
 public class GestorParqueo {
-private final ConexionMysql conexion; 
-    // Define una tarifa (puedes moverla a un config después)
-    private static final double TARIFA_HORA_VARIABLE = 5.00; // Ej: Q5.00 por hora
+    private final ConexionMysql conexion;
+    
     public GestorParqueo() {
         this.conexion = new ConexionMysql(); 
     }  
+    
     /**
      * Este es el método que llamará tu botón "Registrar Ingreso".
      * @param placa
      * @param areaNombre
+     * @param modoTarifaActual
      * @return 
      */
-    public String registrarIngreso(String placa, String areaNombre) {
-        
-        // --- 1. Obtener el modo de tarifa actual ---
-        String modoTarifaActual = "FLAT"; // O "VARIABLE"
+    public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual) {
 
-        // --- 2. Convertir nombre de área
+        // --- 1. Convertir nombre de área
         String areaId = convertirAreaNombreAId(areaNombre);
         if (areaId == null) {
             return "Error: El área seleccionada no es válida.";
         }
 
-        // --- 3. Validar Ocupación ---
+        // --- 2. Validar Ocupación ---
         if (estaAreaLlena(areaId)) {
             return "Error: El área de " + areaNombre + " está llena.";
         }
 
-        // --- 4. Validar si YA EXISTE ---
+        // --- 3. Validar si YA EXISTE ---
         Ticket ticketExistente = buscarTicketActivo(placa);
         if (ticketExistente != null) {
             // SI SE ENCUENTRA un ticket, se rechaza el INGRESO.
             return "Error: Esta placa ya tiene un ticket activo. Use el botón 'Reingreso'.";
         }
 
-        // --- 5. Crear Ticket Nuevo ---
+        // --- 4. Crear Ticket Nuevo ---
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
-        // --- 6. Guardar en Base de Datos ---
+        // --- 5. Guardar en Base de Datos ---
         String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado) VALUES (?, ?, ?, ?, ?, ?)";        
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -80,9 +78,10 @@ private final ConexionMysql conexion;
      * Valida un reingreso basado en las reglas del PDF.
      * Este método es llamado por el botón "Reingreso".
      * @param placa
+     * @param modoTarifaActual
      * @return 
      */
-    public String registrarReingreso(String placa) {
+    public String registrarReingreso(String placa, String modoTarifaActual) {
         // 1. Buscar el ticket
         Ticket ticketExistente = buscarTicketActivo(placa);
         
@@ -91,10 +90,7 @@ private final ConexionMysql conexion;
             return "Error: No se encontró ticket activo para la placa. Use el botón 'Ingreso'.";
         }
         
-        // 3. Obtener modo de tarifa actual (eventualmente de un config)
-        String modoTarifaActual = "FLAT"; // O "VARIABLE"
-        
-        // 4. Aplicar reglas de reingreso del PDF
+        // 3. Aplicar reglas de reingreso del PDF
         
         // REGLA PARA TARIFA PLANA
         if (modoTarifaActual.equals("FLAT")) {
@@ -128,9 +124,10 @@ private final ConexionMysql conexion;
      * Calcula el monto, actualiza la BD y devuelve el ticket finalizado.
      * Si hay un error, devuelve null.
      * @param placa
+     * @param tarifaVariableConfigurada
      * @return 
      */
-    public Ticket registrarSalida(String placa) {
+    public Ticket registrarSalida(String placa, double tarifaVariableConfigurada) {
         // 1. Buscar el ticket activo de la placa
         Ticket ticket = buscarTicketActivo(placa);
         
@@ -158,7 +155,7 @@ private final ConexionMysql conexion;
                 if (horasTranscurridas <= 0) {
                     horasTranscurridas = 1;
                 }   
-                montoFinal = horasTranscurridas * TARIFA_HORA_VARIABLE;
+                montoFinal = horasTranscurridas * tarifaVariableConfigurada;
             }
             default -> {
                 System.err.println("Error: Modo de tarifa desconocido en el ticket: " + ticket.getModo());
@@ -197,8 +194,8 @@ private final ConexionMysql conexion;
     
     /**
      * Genera un PDF con el recibo del ticket.
-     * @param ticket El ticket a imprimir
-     * @return Mensaje con la ruta del archivo o error
+     * @param ticket
+     * @return 
      */
     public String generarTicketPDF(Ticket ticket) {
         // Definir el formato de fecha y hora
@@ -273,32 +270,24 @@ private final ConexionMysql conexion;
     
     /**
      * Actualiza los labels de ocupación en el Dashboard.
-     * Este método consulta la BD y actualiza los 3 JLabels.
      * @param lblMotos
      * @param lblEst
      * @param lblCat
      */
     public void actualizarLabelsOcupacion(JLabel lblMotos, JLabel lblEst, JLabel lblCat) {
-        // Obtenemos los datos para MOTOS (A01)
         int capMotos = getCapacidadArea("A01");
         int ocupMotos = getOcupacionActual("A01");
         lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos);
         
-        // Obtenemos los datos para ESTUDIANTES (A02)
         int capEstudiantes = getCapacidadArea("A02");
         int ocupEstudiantes = getOcupacionActual("A02");
         lblEst.setText("Estudiantes: " + ocupEstudiantes + " / " + capEstudiantes);
         
-        // Obtenemos los datos para CATEDRATICOS (A03)
         int capCatedraticos = getCapacidadArea("A03");
         int ocupCatedraticos = getOcupacionActual("A03");
         lblCat.setText("Catedráticos: " + ocupCatedraticos + " / " + capCatedraticos);
     }
     
-    /**
-     * Método de ayuda para obtener la capacidad MÁXIMA de un área.
-     * Consulta la tabla 'areas' que cargaste desde el CSV.
-     */
     private int getCapacidadArea(String areaId) {
         String sql = "SELECT capacidad FROM areas WHERE area_id = ?";
         try (Connection con = conexion.getConnection();
@@ -316,14 +305,7 @@ private final ConexionMysql conexion;
         return 0;
     }
     
-    /**
-     * Método de ayuda para contar cuántos vehículos hay AHORA MISMO.
-     * Un vehículo ocupa un espacio si su ticket no está "CERRADO"
-     * y es del día de hoy (para manejar las tarifas planas).
-     */
     private int getOcupacionActual(String areaId) {
-        // Contamos tickets que no estén "CERRADO"
-        // Y que sean del día de hoy (para los 'PAGADO' de tarifa plana)
         String sql = "SELECT COUNT(*) FROM ticket " +
                      "WHERE area_id = ? " +
                      "AND estado != 'CERRADO' " +
@@ -344,7 +326,6 @@ private final ConexionMysql conexion;
         return 0;
     }
     
-    // Métodos adicionales para compatibilidad con Dashboard
     public int getOcupacionMotos() {
         return getOcupacionActual("A01");
     }
@@ -363,13 +344,7 @@ private final ConexionMysql conexion;
         return ocupacion >= capacidad;
     }
     
-    /**
-     * Busca un ticket que no esté CERRADO para una placa.
-     * Devuelve un objeto Ticket si lo encuentra, o null si no.
-     */
     private Ticket buscarTicketActivo(String placa) {
-        
-        // Buscamos tickets "ACTIVO" (variable) o "PAGADO" (plana del día de hoy)
         String sql = "SELECT * FROM ticket WHERE placa = ? AND estado != 'CERRADO' " +
                      "ORDER BY fecha_ingreso DESC LIMIT 1";
         
@@ -380,15 +355,11 @@ private final ConexionMysql conexion;
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // ¡Encontramos un ticket! Lo re-creamos usando el constructor completo
-                    
                     int id = rs.getInt("id");
                     String areaId = rs.getString("area_id");
                     
-                    // Convertir de SQL Timestamp a Java LocalDateTime
                     LocalDateTime fechaIngreso = rs.getTimestamp("fecha_ingreso").toLocalDateTime();
                     
-                    // La fecha de salida puede ser NULL en la BD
                     LocalDateTime fechaSalida = null;
                     Timestamp tsSalida = rs.getTimestamp("fecha_salida");
                     if (tsSalida != null) {
@@ -399,7 +370,6 @@ private final ConexionMysql conexion;
                     double monto = rs.getDouble("monto");
                     String estado = rs.getString("estado");
                     
-                    // Usamos el constructor completo que añadimos a Ticket
                     return new Ticket(id, placa, areaId, fechaIngreso, fechaSalida, modo, monto, estado);
                 }
             }
@@ -407,7 +377,6 @@ private final ConexionMysql conexion;
             System.err.println("Error al buscar ticket: " + e.getMessage());
         }
         
-        // Si no se encontró nada o hubo un error
         return null;
     }
 }
