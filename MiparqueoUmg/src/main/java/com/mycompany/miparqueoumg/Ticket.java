@@ -4,7 +4,6 @@
  */
 package com.mycompany.miparqueoumg;
 import java.time.LocalDateTime;
-
 /**
  *
  * @author barri
@@ -18,6 +17,7 @@ public class Ticket {
     private String modo; // "FLAT" o "VARIABLE"
     private double monto;
     private String estado; // "ACTIVO", "PAGADO", "CERRADO"
+    private long horas; // No es de la BD, es temporal para el recibo
     
     // --- Constructor para tickets NUEVOS ---
     public Ticket(String placa, String areaId, String modo) {
@@ -118,5 +118,13 @@ public class Ticket {
     
     public void setEstado(String estado) {
         this.estado = estado;
-    } 
+    }
+    
+    public long getHoras() {
+        return horas;
+    }
+    
+    public void setHoras(long horas) {
+        this.horas = horas;
+    }
 }

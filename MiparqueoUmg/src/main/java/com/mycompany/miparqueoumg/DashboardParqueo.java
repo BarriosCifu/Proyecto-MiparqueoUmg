@@ -76,6 +76,11 @@ jComboBox1.addItem("Estudiantes");
         });
 
         jButton2.setText("Salida");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         jLabel3.setText("Motos: 0/120");
@@ -192,6 +197,44 @@ JOptionPane.showMessageDialog(this, respuesta);
     // porque un reingreso no cambia el conteo de ocupación.
 
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // 1. Obtener datos de la UI
+    String placa = jTextField1.getText().toUpperCase().trim();
+    // 2. Validar que la placa no esté vacía
+    if (placa.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Debe ingresar una placa.");
+        return;
+    }
+    // 3. Llamar al cerebro para registrar la salida
+    Ticket ticketFinalizado = gestor.registrarSalida(placa);
+    
+    // 4. Validar la respuesta
+    if (ticketFinalizado == null) {
+        // Error
+        JOptionPane.showMessageDialog(this, 
+            "Error: No se pudo registrar la salida.\nRevise si la placa es correcta y tiene un ingreso activo.", 
+            "Error de Salida", 
+            JOptionPane.ERROR_MESSAGE);
+    } else {
+        // ¡Éxito!
+        // 5. Generar el PDF
+        String respuestaPDF = gestor.generarTicketPDF(ticketFinalizado);
+        // 6. Mostrar mensaje de éxito
+        JOptionPane.showMessageDialog(this, 
+            """
+            \u00a1Salida Registrada!
+            Modo: """ + ticketFinalizado.getModo() + "\n" +
+            "Total: Q" + String.format("%.2f", ticketFinalizado.getMonto()) + "\n" +
+            respuestaPDF, // Muestra la ruta del PDF
+            "Salida Exitosa", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // 7. Actualizar la ocupación y limpiar
+        actualizarOcupacion();
+        jTextField1.setText("");
+    }
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
