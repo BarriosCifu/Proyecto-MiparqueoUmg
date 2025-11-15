@@ -11,14 +11,14 @@ import javax.swing.JFrame;
 public class Parqueo extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Parqueo.class.getName());
+// ¡AQUÍ CREAMOS EL CEREBRO UNA SOLA VEZ!
+    public final GestorParqueo gestorPrincipal = new GestorParqueo();
 
-    /**
-     * Creates new form Parqueo
-     */
     public Parqueo() {
         initComponents();
+        this.setLocationRelativeTo(null); // (Opcional, para centrar el menú)
     }
-
+  
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -34,6 +34,8 @@ public class Parqueo extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         panel = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        btnReportes = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Menu");
@@ -73,6 +75,12 @@ public class Parqueo extends javax.swing.JFrame {
         jLabel4.setText("Panel de control");
         jLabel4.setToolTipText("");
 
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel5.setText("Reportes");
+
+        btnReportes.setBackground(new java.awt.Color(255, 102, 51));
+        btnReportes.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -89,13 +97,18 @@ public class Parqueo extends javax.swing.JFrame {
                         .addGap(196, 196, 196)
                         .addComponent(jLabel4))
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(200, 200, 200)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(12, 12, 12)
+                                .addComponent(jLabel5))))
+                    .addGroup(layout.createSequentialGroup()
                         .addGap(185, 185, 185)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(archivos, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(panel, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(200, 200, 200)
-                        .addComponent(jLabel2)))
+                            .addComponent(panel, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnReportes, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(73, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -109,11 +122,15 @@ public class Parqueo extends javax.swing.JFrame {
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panel, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(138, 138, 138)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel5)
+                .addGap(18, 18, 18)
+                .addComponent(btnReportes, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(36, 36, 36)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(archivos, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(85, Short.MAX_VALUE))
+                .addContainerGap(97, Short.MAX_VALUE))
         );
 
         pack();
@@ -128,12 +145,15 @@ CargaArchivos.setVisible(true);
     }//GEN-LAST:event_archivosActionPerformed
 
     private void panelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panelActionPerformed
-DashboardParqueo DashboardParqueo = new DashboardParqueo ();
+DashboardParqueo DashboardParqueo;
+        DashboardParqueo = new DashboardParqueo ();
 DashboardParqueo.setVisible(true);
 this.dispose();
     }//GEN-LAST:event_panelActionPerformed
-
+//<editor-fold defaultstate="collapsed" desc="/*comment*/">
+    
     /**
+     * //</editor-fold>
      * @param args the command line arguments
      */
     public static void main(String args[]) {
@@ -160,10 +180,12 @@ this.dispose();
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton archivos;
+    private javax.swing.JButton btnReportes;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JButton panel;
     // End of variables declaration//GEN-END:variables
 }

@@ -31,6 +31,10 @@ jComboBox1.addItem("Estudiantes");
     // Actualiza los labels de ocupación al abrir
      actualizarOcupacion();
     }
+
+    DashboardParqueo(GestorParqueo gestorPrincipal) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
     // Método para actualizar la ocupación
     public final void actualizarOcupacion() {
         // Aquí actualizas los labels según la ocupación

@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JLabel;
+import javax.swing.JTable;
 
 public class GestorParqueo {
     private final ConexionMysql conexion;
@@ -582,5 +583,9 @@ public class GestorParqueo {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    void cargarReporteCompleto(JTable tblReporte) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }
