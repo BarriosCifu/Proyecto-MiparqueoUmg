@@ -1,21 +1,31 @@
-/*
- * Conexion de sql(es la conexion a la base de datos)
- * 
- */
-package com.mycompany.miparqueoumg;
-import java.sql.Connection;
-import java.sql.DriverManager
+// El paquete debe ser el de tu proyecto, no 'hasmap'
+package com.mycompany.miparqueoumg; 
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+/**
+ * VERSIÓN CORREGIDA
+ */
 public class ConexionMysql {
-    public static Conection Conectar (){
-    Conection cn=null;
-    try{
-     Class.forName("com.mysql.jdbc.Driver");
-     cn=DriverManager("jdbc:mysql://localhost")
-    } catch (Exception e){
-        System.out.println(String.valueOf(e));
+
+    private static final String URL = "jdbc:mysql://localhost:3306/miparqueoumg";
+    private static final String USUARIO = "root";
+    private static final String CONTRASENA = ""; // Sin 'ñ'
+
+    /**
+     * Este es el método que tu GestorParqueo SÍ puede usar.
+     * @return 
+     */
+    public Connection getConnection() {
+        Connection con = null;
+        try {
+            con = DriverManager.getConnection(URL, USUARIO, CONTRASENA);
+        } catch (SQLException e) {
+            System.out.println("Error de conexión: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return con;
     }
-        
-    }
-    
 }

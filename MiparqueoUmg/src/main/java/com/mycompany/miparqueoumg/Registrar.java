@@ -3,8 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.mycompany.miparqueoumg;
-
-import hasmap.ConexionMysql;
 import java.awt.HeadlessException;
 import java.sql.Connection;
 import java.sql.DriverManager;

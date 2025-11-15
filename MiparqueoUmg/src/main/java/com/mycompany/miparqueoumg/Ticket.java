@@ -1,18 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.miparqueoumg;
 import java.time.LocalDateTime;
+
 /**
- *
+ * Clase Ticket - Representa un ticket de estacionamiento
  * @author barri
  */
 public class Ticket {
     private int id;
     private String placa;
     private String areaId; // Ej: "A01"
-    private String spotId; // ⬅️ AÑADIDO: Ej: "A01-001"
+    private String spotId; // Ej: "A01-001"
     private LocalDateTime fechaIngreso;
     private LocalDateTime fechaSalida;
     private String modo; // "FLAT" o "VARIABLE"
@@ -20,30 +17,36 @@ public class Ticket {
     private String estado; // "ACTIVO", "PAGADO", "CERRADO"
     private long horas; // No es de la BD, es temporal para el recibo
     
-    // --- Constructor para tickets NUEVOS ---
-    public Ticket(String placa, String areaId, String modo) {
+    // --- Constructor para tickets NUEVOS (CORREGIDO) ---
+    /**
+     * Constructor para crear un ticket nuevo al momento del ingreso.
+     * @param placa Placa del vehículo
+     * @param areaId ID del área (ej: "A01")
+     * @param spotId ID del spot asignado (ej: "A01-001") ⬅️ AÑADIDO
+     * @param modo Modo de tarifa ("FLAT" o "VARIABLE")
+     */
+    public Ticket(String placa, String areaId, String spotId, String modo) { // ⬅️ AÑADIDO spotId
         this.placa = placa;
         this.areaId = areaId;
+        this.spotId = spotId; // ⬅️ ASIGNAR
         this.modo = modo;
         this.fechaIngreso = LocalDateTime.now();
         this.estado = (modo.equals("FLAT")) ? "PAGADO" : "ACTIVO";
         this.monto = (modo.equals("FLAT")) ? 10.00 : 0.00;
     }
     
-    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-    //      CONSTRUCTOR AÑADIDO (ACTUALIZADO CON spotId)
-    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+    // --- Constructor para RE-CREAR un ticket desde la Base de Datos ---
     /**
-     * Constructor para RE-CREAR un ticket desde la Base de Datos.
-     * @param id
-     * @param placa
-     * @param areaId
-     * @param spotId ⬅️ AÑADIDO
-     * @param fechaIngreso
-     * @param fechaSalida
-     * @param modo
-     * @param monto
-     * @param estado
+     * Constructor completo para recrear un ticket desde la BD.
+     * @param id ID del ticket
+     * @param placa Placa del vehículo
+     * @param areaId ID del área
+     * @param spotId ID del spot
+     * @param fechaIngreso Fecha y hora de ingreso
+     * @param fechaSalida Fecha y hora de salida (puede ser null)
+     * @param modo Modo de tarifa
+     * @param monto Monto a pagar
+     * @param estado Estado del ticket
      */
     public Ticket(int id, String placa, String areaId, String spotId,
                   LocalDateTime fechaIngreso, LocalDateTime fechaSalida, 
@@ -51,7 +54,7 @@ public class Ticket {
         this.id = id;
         this.placa = placa;
         this.areaId = areaId;
-        this.spotId = spotId; // ⬅️ AÑADIDO
+        this.spotId = spotId;
         this.fechaIngreso = fechaIngreso;
         this.fechaSalida = fechaSalida;
         this.modo = modo;
@@ -84,12 +87,10 @@ public class Ticket {
         this.areaId = areaId;
     }
     
-    // ⬅️ AÑADIDO: Getter para spotId
     public String getSpotId() {
         return spotId;
     }
     
-    // ⬅️ AÑADIDO: Setter para spotId
     public void setSpotId(String spotId) {
         this.spotId = spotId;
     }

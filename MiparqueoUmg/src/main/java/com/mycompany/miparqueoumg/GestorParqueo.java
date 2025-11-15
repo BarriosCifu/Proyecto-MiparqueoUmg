@@ -9,7 +9,6 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
-import hasmap.ConexionMysql;
 import com.mycompany.miparqueoumg.Ticket;
 import java.sql.Connection;
 import java.time.temporal.ChronoUnit;
@@ -31,8 +30,8 @@ public class GestorParqueo {
     }  
     
     /**
-     * MÉTODO "REGISTRAR INGRESO" (VERSIÓN FINAL)
-     * Ahora valida el tipo de vehículo.
+     * MÉTODO "REGISTRAR INGRESO" (VERSIÓN CORREGIDA)
+     * Ahora valida el tipo de vehículo y asigna correctamente el spotId.
      * @param placa
      * @param areaNombre
      * @param modoTarifaActual
@@ -70,25 +69,23 @@ public class GestorParqueo {
             return "Error: Esta placa ya tiene un ticket activo. Use el botón 'Reingreso'.";
         }
 
-        // --- 5. Crear Ticket Nuevo ---
-        Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
+        // --- 5. Crear Ticket Nuevo (CORREGIDO) ---
+        Ticket nuevoTicket = new Ticket(placa, areaId, spotAsignado, modoTarifaActual); // ⬅️ AÑADIDO spotAsignado
         
         // --- 6. Guardar en Base de Datos ---
-        // `area_id` (con guion bajo) no necesita backticks
-        // `spot-id` (con guion) SÍ necesita backticks
         String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, `spot-id`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, nuevoTicket.getPlaca());
-            ps.setString(2, nuevoTicket.getAreaId()); // Parámetro 2 es area_id
+            ps.setString(2, nuevoTicket.getAreaId());
             ps.setObject(3, nuevoTicket.getFechaIngreso());
             ps.setString(4, nuevoTicket.getModo());
             ps.setDouble(5, nuevoTicket.getMonto());
             ps.setString(6, nuevoTicket.getEstado());
 
-            if (modoTarifaActual.equals("FLAT")) {
+            if (modoTarifaActual.equalsIgnoreCase("FLAT")) {
                 ps.setString(7, metodoPago);
             } else {
                 ps.setNull(7, java.sql.Types.VARCHAR);
@@ -128,9 +125,9 @@ public class GestorParqueo {
         // 3. Aplicar reglas de reingreso del PDF
         
         // REGLA PARA TARIFA PLANA
-        if (modoTarifaActual.equals("FLAT")) {
+        if (modoTarifaActual.equalsIgnoreCase("FLAT")) {
             // Comprobar que el ticket sea FLAT y del mismo día
-            if (ticketExistente.getModo().equals("FLAT") && 
+            if (ticketExistente.getModo().equalsIgnoreCase("FLAT") && 
                 ticketExistente.getFechaIngreso().toLocalDate().isEqual(LocalDate.now())) {
                 // ¡Éxito! Se permite el reingreso
                 return "Reingreso (Tarifa Plana) PERMITIDO. (Ticket del día)";
@@ -140,10 +137,10 @@ public class GestorParqueo {
         }
         
         // REGLA PARA TARIFA VARIABLE
-        if (modoTarifaActual.equals("VARIABLE")) {
+        if (modoTarifaActual.equalsIgnoreCase("VARIABLE")) {
             // Comprobar que el ticket (VARIABLE) siga "ACTIVO"
-            if (ticketExistente.getModo().equals("VARIABLE") && 
-                ticketExistente.getEstado().equals("ACTIVO")) {
+            if (ticketExistente.getModo().equalsIgnoreCase("VARIABLE") && 
+                ticketExistente.getEstado().equalsIgnoreCase("ACTIVO")) {
                 // ¡Éxito! El ticket sigue abierto
                 return "Reingreso (Tarifa Variable) PERMITIDO. (Ticket sigue activo)";
             } else {
@@ -170,7 +167,7 @@ public class GestorParqueo {
         // 2. Validar si no se encontró
         if (ticket == null) {
             System.err.println("Error: No se encontró ticket activo para la placa: " + placa);
-            return null; // Devolvemos null para que el Dashboard muestre error
+            return null;
         }
         
         LocalDateTime fechaSalidaActual = LocalDateTime.now();
@@ -178,7 +175,7 @@ public class GestorParqueo {
         long horasTranscurridas = 0;
         
         // 3. Aplicar lógica de cobro según el MODO del TICKET
-        switch (ticket.getModo()) {
+        switch (ticket.getModo().toUpperCase()) {
             case "FLAT" -> // En Tarifa Plana, el monto ya está pagado. Solo se cierra.
                 montoFinal = ticket.getMonto(); // Debería ser 10.00
             case "VARIABLE" -> {
@@ -209,7 +206,7 @@ public class GestorParqueo {
             ps.setDouble(2, montoFinal);
             
             // Si el modo es VARIABLE, guardamos el método de pago; si es FLAT, no actualizamos
-            if (ticket.getModo().equals("VARIABLE")) {
+            if (ticket.getModo().equalsIgnoreCase("VARIABLE")) {
                 ps.setString(3, metodoPago);
             } else {
                 ps.setNull(3, java.sql.Types.VARCHAR);
@@ -222,13 +219,8 @@ public class GestorParqueo {
             if (filasAfectadas > 0) {
                 // ¡Éxito! El ticket se actualizó a "CERRADO"
                 
-                // ⬇️⬇️⬇️ LÓGICA NUEVA: Liberar el spot ⬇️⬇️⬇️
-                
-                // ¡MUY IMPORTANTE! Liberar el spot en la tabla 'spot'
-                // Usamos el método de ayuda que ya creamos
+                // Liberar el spot en la tabla 'spot'
                 actualizarEstadoSpot(ticket.getSpotId(), "FREE");
-                
-                // ⬆️⬆️⬆️ FIN DE LA LÓGICA NUEVA ⬆️⬆️⬆️
                 
                 // Actualizamos el objeto Ticket en Java antes de devolverlo
                 ticket.setFechaSalida(fechaSalidaActual);
@@ -242,7 +234,8 @@ public class GestorParqueo {
             }
             
         } catch (Exception e) {
-            return null; // Error de BD
+            e.printStackTrace();
+            return null;
         }
     }
     
@@ -281,6 +274,8 @@ public class GestorParqueo {
                 contentStream.newLine();
                 contentStream.showText("Area: " + ticket.getAreaId());
                 contentStream.newLine();
+                contentStream.showText("Spot: " + ticket.getSpotId()); // ⬅️ AÑADIDO
+                contentStream.newLine();
                 contentStream.newLine();
                 
                 contentStream.showText("Fecha Ingreso: " + ticket.getFechaIngreso().format(formatter));
@@ -293,8 +288,8 @@ public class GestorParqueo {
                 contentStream.showText("Modo: " + ticket.getModo());
                 contentStream.newLine();
                 
-                if (ticket.getModo().equals("VARIABLE")) {
-                    contentStream.showText("Tiempo: " + ticket.getHoras() + " horas (o fracción)");
+                if (ticket.getModo().equalsIgnoreCase("VARIABLE")) {
+                    contentStream.showText("Tiempo: " + ticket.getHoras() + " horas (o fraccion)");
                     contentStream.newLine();
                 }
                 
@@ -323,8 +318,7 @@ public class GestorParqueo {
     }
     
     /**
-     * (Paso 4.1) Actualiza los JLabels del dashboard con la ocupación.
-     * ¡VERSIÓN CORREGIDA PARA USAR SPOTS!
+     * Actualiza los JLabels del dashboard con la ocupación.
      * @param lblMotos
      * @param lblEst
      * @param lblCat
@@ -332,19 +326,19 @@ public class GestorParqueo {
     public void actualizarLabelsOcupacion(JLabel lblMotos, JLabel lblEst, JLabel lblCat) {
         
         // Obtenemos los datos para MOTOS (A01)
-        int capMotos = getCapacidadPorSpots("A01");   // <-- CORREGIDO
-        int ocupMotos = getOcupacionPorSpots("A01");  // <-- CORREGIDO
-        lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos); // Ej: "Motos: 0 / 5"
+        int capMotos = getCapacidadPorSpots("A01");
+        int ocupMotos = getOcupacionPorSpots("A01");
+        lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos);
 
         // Obtenemos los datos para ESTUDIANTES (A02)
-        int capEstudiantes = getCapacidadPorSpots("A02");   // <-- CORREGIDO
-        int ocupEstudiantes = getOcupacionPorSpots("A02");  // <-- CORREGIDO
+        int capEstudiantes = getCapacidadPorSpots("A02");
+        int ocupEstudiantes = getOcupacionPorSpots("A02");
         lblEst.setText("Estudiantes: " + ocupEstudiantes + " / " + capEstudiantes);
 
         // Obtenemos los datos para CATEDRATICOS (A03)
-        int capCatedraticos = getCapacidadPorSpots("A03");   // <-- CORREGIDO
-        int ocupCatedraticos = getOcupacionPorSpots("A03");  // <-- CORREGIDO
-        lblCat.setText("Catedráticos: " + ocupCatedraticos + " / " + capCatedraticos);
+        int capCatedraticos = getCapacidadPorSpots("A03");
+        int ocupCatedraticos = getOcupacionPorSpots("A03");
+        lblCat.setText("Catedraticos: " + ocupCatedraticos + " / " + capCatedraticos);
     }
     
     private int getCapacidadArea(String areaId) {
@@ -380,7 +374,7 @@ public class GestorParqueo {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al obtener ocupación actual: " + e.getMessage());
+            System.err.println("Error al obtener ocupacion actual: " + e.getMessage());
         }
         return 0;
     }
@@ -403,6 +397,10 @@ public class GestorParqueo {
         return ocupacion >= capacidad;
     }
     
+    /**
+     * MÉTODO "BUSCAR TICKET ACTIVO" (YA CORREGIDO)
+     * Lee todas las columnas, incluyendo las que tienen guiones.
+     */
     private Ticket buscarTicketActivo(String placa) {
         String sql = "SELECT * FROM ticket WHERE placa = ? AND estado != 'CERRADO' " +
                      "ORDER BY fecha_ingreso DESC LIMIT 1";
@@ -415,8 +413,8 @@ public class GestorParqueo {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int id = rs.getInt("id");
-                    String areaId = rs.getString("area_id"); // area_id con guion bajo
-                    String spotId = rs.getString("spot-id"); // spot-id con guion
+                    String areaId = rs.getString("area_id");
+                    String spotId = rs.getString("spot-id");
                     
                     LocalDateTime fechaIngreso = rs.getTimestamp("fecha_ingreso").toLocalDateTime();
                     
@@ -434,18 +432,16 @@ public class GestorParqueo {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al buscar ticket: " + e.getMessage());
+            e.printStackTrace();
         }
         
         return null;
     }
     
     /**
-     * MÉTODO NUEVO: Busca el tipo de vehículo de una placa
-     * Versión robusta: ignora espacios Y mayúsculas/minúsculas
+     * Busca el tipo de vehículo de una placa
      */
     private String getTipoVehiculoDePlaca(String placa) {
-        // DESPUÉS (Corregido con `backticks` y guion):
         String sql = "SELECT `tipo-vehiculo` FROM vehiculos WHERE TRIM(UPPER(placa)) = TRIM(UPPER(?))";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -453,22 +449,19 @@ public class GestorParqueo {
             ps.setString(1, placa);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // DESPUÉS (Limpia el resultado):
                     return rs.getString("tipo-vehiculo").trim();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null; // Placa no encontrada
+        return null;
     }
     
     /**
-     * MÉTODO CORREGIDO:
      * Busca un spot libre para un ÁREA y un TIPO DE VEHÍCULO
      */
     private String buscarSpotLibre(String areaId, String tipoVehiculo) {
-        // DESPUÉS (Corregido con `backticks` y guion):
         String sql = "SELECT `spot-id` FROM spot WHERE `area-id` = ? AND TRIM(`tipo-vehiculo`) = ? AND status = 'FREE' LIMIT 1";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -478,22 +471,19 @@ public class GestorParqueo {
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // DESPUÉS (Corregido con guion):
                     return rs.getString("spot-id");
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null; // No hay spots libres para ESE tipo de vehículo
+        return null;
     }
     
     /**
-     * MÉTODO NUEVO 2:
-     * Actualiza el estado de un spot (ej. de 'FREE' a 'OCCUPIED')
+     * Actualiza el estado de un spot
      */
     private void actualizarEstadoSpot(String spotId, String nuevoEstado) {
-        // DESPUÉS (Corregido con `backticks` y guion):
         String sql = "UPDATE spot SET status = ? WHERE `spot-id` = ?";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -508,26 +498,21 @@ public class GestorParqueo {
     }
     
     /**
-     * MÉTODO NUEVO 3:
      * Devuelve un mapa con el estado visual de CADA spot.
-     * Key: spot_id (ej: "M01")
-     * Value: "FREE", "OCUPADO_FLAT", "OCUPADO_VARIABLE"
      * @return 
      */
     public Map<String, String> getEstadoVisualSpots() {
         
         Map<String, String> mapaEstados = new HashMap<>();
         
-        // Esta consulta es avanzada. Junta 'spot' y 'ticket' para saber
-        // el estado de cada spot Y el modo del ticket que lo ocupa.
         String sql = "SELECT " +
                      "  s.`spot-id`, " +
                      "  s.status, " +
                      "  t.modo " +
                      "FROM spot s " +
                      "LEFT JOIN ticket t ON s.`spot-id` = t.`spot-id` " +
-                     "  AND t.estado != 'CERRADO' " + // Solo tickets activos
-                     "  AND DATE(t.fecha_ingreso) = CURDATE()"; // Solo de hoy
+                     "  AND t.estado != 'CERRADO' " +
+                     "  AND DATE(t.fecha_ingreso) = CURDATE()";
 
         try (Connection con = conexion.getConnection();
              Statement st = con.createStatement();
@@ -536,16 +521,15 @@ public class GestorParqueo {
             while (rs.next()) {
                 String spotId = rs.getString("spot-id");
                 String status = rs.getString("status");
-                String modo = rs.getString("modo"); // Puede ser NULL si está FREE
+                String modo = rs.getString("modo");
 
                 if (status.equals("FREE")) {
-                    mapaEstados.put(spotId, "FREE"); // Verde
+                    mapaEstados.put(spotId, "FREE");
                 } else {
-                    // Está ocupado. Veamos por qué.
                     if ("FLAT".equals(modo)) {
-                        mapaEstados.put(spotId, "OCUPADO_FLAT"); // Amarillo (Ya pagó)
+                        mapaEstados.put(spotId, "OCUPADO_FLAT");
                     } else {
-                        mapaEstados.put(spotId, "OCUPADO_VARIABLE"); // Rojo (Pendiente)
+                        mapaEstados.put(spotId, "OCUPADO_VARIABLE");
                     }
                 }
             }
@@ -557,7 +541,7 @@ public class GestorParqueo {
     }
     
     /**
-     * (CONTEO NUEVO) Devuelve la capacidad MÁXIMA de un área contando sus spots.
+     * Devuelve la capacidad MÁXIMA de un área contando sus spots.
      * @param areaId
      * @return 
      */
@@ -569,15 +553,17 @@ public class GestorParqueo {
             ps.setString(1, areaId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // Devolverá 5
+                    return rs.getInt(1);
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return 0;
     }
     
     /**
-     * (CONTEO NUEVO) Devuelve la ocupación ACTUAL de un área contando sus spots 'OCCUPIED'.
+     * Devuelve la ocupación ACTUAL de un área contando sus spots 'OCCUPIED'.
      * @param areaId
      * @return 
      */
@@ -589,10 +575,12 @@ public class GestorParqueo {
             ps.setString(1, areaId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // Devolverá 0, 1, 2, etc.
+                    return rs.getInt(1);
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return 0;
     }
 }

@@ -1,5 +1,6 @@
 com\mycompany\miparqueoumg\CargaArchivos$3.class
 com\mycompany\miparqueoumg\DashboardParqueo$5.class
+com\mycompany\miparqueoumg\ConexionMysql.class
 com\mycompany\miparqueoumg\Registrar$1.class
 com\mycompany\miparqueoumg\DashboardParqueo$3.class
 com\mycompany\miparqueoumg\MiparqueoUmg.class
@@ -8,7 +9,6 @@ com\mycompany\miparqueoumg\CargaArchivos$6.class
 com\mycompany\miparqueoumg\MapaParqueo.class
 com\mycompany\miparqueoumg\DashboardParqueo$2.class
 com\mycompany\miparqueoumg\GestorParqueo.class
-hasmap\ConexionMysql.class
 com\mycompany\miparqueoumg\Parqueo.class
 com\mycompany\miparqueoumg\CargaArchivos$1.class
 com\mycompany\miparqueoumg\Parqueo$2.class
