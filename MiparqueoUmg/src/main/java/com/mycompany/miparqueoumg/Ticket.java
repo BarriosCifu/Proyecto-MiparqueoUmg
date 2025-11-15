@@ -22,17 +22,17 @@ public class Ticket {
      * Constructor para crear un ticket nuevo al momento del ingreso.
      * @param placa Placa del vehículo
      * @param areaId ID del área (ej: "A01")
-     * @param spotId ID del spot asignado (ej: "A01-001") ⬅️ AÑADIDO
+     * @param spotId ID del spot asignado (ej: "A01-001")
      * @param modo Modo de tarifa ("FLAT" o "VARIABLE")
      */
-    public Ticket(String placa, String areaId, String spotId, String modo) { // ⬅️ AÑADIDO spotId
+    public Ticket(String placa, String areaId, String spotId, String modo) {
         this.placa = placa;
         this.areaId = areaId;
-        this.spotId = spotId; // ⬅️ ASIGNAR
+        this.spotId = spotId;
         this.modo = modo;
         this.fechaIngreso = LocalDateTime.now();
-        this.estado = (modo.equals("FLAT")) ? "PAGADO" : "ACTIVO";
-        this.monto = (modo.equals("FLAT")) ? 10.00 : 0.00;
+        this.estado = (modo.equalsIgnoreCase("FLAT")) ? "PAGADO" : "ACTIVO"; // ✅ CORREGIDO
+        this.monto = (modo.equalsIgnoreCase("FLAT")) ? 10.00 : 0.00; // ✅ CORREGIDO
     }
     
     // --- Constructor para RE-CREAR un ticket desde la Base de Datos ---
