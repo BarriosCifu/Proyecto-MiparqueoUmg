@@ -33,6 +33,11 @@ public class GestorParqueo {
     /**
      * MÉTODO "REGISTRAR INGRESO" (VERSIÓN FINAL)
      * Ahora valida el tipo de vehículo.
+     * @param placa
+     * @param areaNombre
+     * @param modoTarifaActual
+     * @param metodoPago
+     * @return 
      */
     public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual, String metodoPago) {
 
@@ -69,13 +74,15 @@ public class GestorParqueo {
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
         // --- 6. Guardar en Base de Datos ---
-        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, spot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        // `area_id` (con guion bajo) no necesita backticks
+        // `spot-id` (con guion) SÍ necesita backticks
+        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, `spot-id`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, nuevoTicket.getPlaca());
-            ps.setString(2, nuevoTicket.getAreaId());
+            ps.setString(2, nuevoTicket.getAreaId()); // Parámetro 2 es area_id
             ps.setObject(3, nuevoTicket.getFechaIngreso());
             ps.setString(4, nuevoTicket.getModo());
             ps.setDouble(5, nuevoTicket.getMonto());
@@ -87,7 +94,7 @@ public class GestorParqueo {
                 ps.setNull(7, java.sql.Types.VARCHAR);
             }
             
-            ps.setString(8, spotAsignado); // Asignar el spot
+            ps.setString(8, spotAsignado); // Parámetro 8 es spot-id
             
             ps.executeUpdate();
             
@@ -408,8 +415,8 @@ public class GestorParqueo {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int id = rs.getInt("id");
-                    String areaId = rs.getString("area_id");
-                    String spotId = rs.getString("spot_id"); // ⬅️ LEER spot_id
+                    String areaId = rs.getString("area_id"); // area_id con guion bajo
+                    String spotId = rs.getString("spot-id"); // spot-id con guion
                     
                     LocalDateTime fechaIngreso = rs.getTimestamp("fecha_ingreso").toLocalDateTime();
                     
@@ -446,8 +453,8 @@ public class GestorParqueo {
             ps.setString(1, placa);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // DESPUÉS (Corregido con guion):
-                    return rs.getString("tipo-vehiculo");
+                    // DESPUÉS (Limpia el resultado):
+                    return rs.getString("tipo-vehiculo").trim();
                 }
             }
         } catch (Exception e) {
@@ -462,16 +469,17 @@ public class GestorParqueo {
      */
     private String buscarSpotLibre(String areaId, String tipoVehiculo) {
         // DESPUÉS (Corregido con `backticks` y guion):
-        String sql = "SELECT spot_id FROM spot WHERE area_id = ? AND `tipo-vehiculo` = ? AND status = 'FREE' LIMIT 1";
+        String sql = "SELECT `spot-id` FROM spot WHERE `area-id` = ? AND TRIM(`tipo-vehiculo`) = ? AND status = 'FREE' LIMIT 1";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, areaId);
-            ps.setString(2, tipoVehiculo); // <-- Esta línea está bien, no necesita cambios
+            ps.setString(2, tipoVehiculo);
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("spot_id");
+                    // DESPUÉS (Corregido con guion):
+                    return rs.getString("spot-id");
                 }
             }
         } catch (Exception e) {
@@ -485,7 +493,8 @@ public class GestorParqueo {
      * Actualiza el estado de un spot (ej. de 'FREE' a 'OCCUPIED')
      */
     private void actualizarEstadoSpot(String spotId, String nuevoEstado) {
-        String sql = "UPDATE spot SET status = ? WHERE spot_id = ?";
+        // DESPUÉS (Corregido con `backticks` y guion):
+        String sql = "UPDATE spot SET status = ? WHERE `spot-id` = ?";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
@@ -512,11 +521,11 @@ public class GestorParqueo {
         // Esta consulta es avanzada. Junta 'spot' y 'ticket' para saber
         // el estado de cada spot Y el modo del ticket que lo ocupa.
         String sql = "SELECT " +
-                     "  s.spot_id, " +
+                     "  s.`spot-id`, " +
                      "  s.status, " +
                      "  t.modo " +
                      "FROM spot s " +
-                     "LEFT JOIN ticket t ON s.spot_id = t.spot_id " +
+                     "LEFT JOIN ticket t ON s.`spot-id` = t.`spot-id` " +
                      "  AND t.estado != 'CERRADO' " + // Solo tickets activos
                      "  AND DATE(t.fecha_ingreso) = CURDATE()"; // Solo de hoy
 
@@ -525,7 +534,7 @@ public class GestorParqueo {
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
-                String spotId = rs.getString("spot_id");
+                String spotId = rs.getString("spot-id");
                 String status = rs.getString("status");
                 String modo = rs.getString("modo"); // Puede ser NULL si está FREE
 
@@ -553,7 +562,7 @@ public class GestorParqueo {
      * @return 
      */
     public int getCapacidadPorSpots(String areaId) {
-        String sql = "SELECT COUNT(*) FROM spot WHERE area_id = ?";
+        String sql = "SELECT COUNT(*) FROM spot WHERE `area-id` = ?";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
@@ -573,7 +582,7 @@ public class GestorParqueo {
      * @return 
      */
     public int getOcupacionPorSpots(String areaId) {
-        String sql = "SELECT COUNT(*) FROM spot WHERE area_id = ? AND status = 'OCCUPIED'";
+        String sql = "SELECT COUNT(*) FROM spot WHERE `area-id` = ? AND status = 'OCCUPIED'";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
