@@ -1,5 +1,7 @@
 package com.mycompany.miparqueoumg;
-
+import java.util.Map;
+import java.util.HashMap;
+import java.sql.Statement;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -13,9 +15,12 @@ import java.sql.Connection;
 import java.time.temporal.ChronoUnit;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JLabel;
 
 public class GestorParqueo {
@@ -41,9 +46,12 @@ public class GestorParqueo {
             return "Error: El área seleccionada no es válida.";
         }
 
-        // --- 2. Validar Ocupación ---
-        if (estaAreaLlena(areaId)) {
-            return "Error: El área de " + areaNombre + " está llena.";
+        // --- 2. Buscar un Spot Libre ---
+        String spotAsignado = buscarSpotLibre(areaId);
+        
+        if (spotAsignado == null) {
+            // Ya no usamos estaAreaLlena(), sino que verificamos si se encontró un spot
+            return "Error: El área de " + areaNombre + " está llena (no hay spots libres).";
         }
 
         // --- 3. Validar si YA EXISTE ---
@@ -57,7 +65,7 @@ public class GestorParqueo {
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
         // --- 5. Guardar en Base de Datos ---
-        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?)";        
+        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, spot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";        
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
@@ -75,7 +83,15 @@ public class GestorParqueo {
                 ps.setNull(7, java.sql.Types.VARCHAR);
             }
             
+            // Asignar el spotId al ticket (el 8vo '?' en el SQL)
+            ps.setString(8, spotAsignado);
+            
+            // Ejecutar la inserción del ticket
             ps.executeUpdate();
+            
+            // ¡MUY IMPORTANTE! Marcar el spot como ocupado en la tabla 'spot'
+            actualizarEstadoSpot(spotAsignado, "OCCUPIED");
+            
             return "Ingreso Registrado (Modo " + modoTarifaActual + "). Monto: Q" + nuevoTicket.getMonto();
             
         } catch (Exception e) {
@@ -194,7 +210,17 @@ public class GestorParqueo {
             int filasAfectadas = ps.executeUpdate();
             
             if (filasAfectadas > 0) {
-                // ¡Éxito! Actualizamos el objeto Ticket en Java antes de devolverlo
+                // ¡Éxito! El ticket se actualizó a "CERRADO"
+                
+                // ⬇️⬇️⬇️ LÓGICA NUEVA: Liberar el spot ⬇️⬇️⬇️
+                
+                // ¡MUY IMPORTANTE! Liberar el spot en la tabla 'spot'
+                // Usamos el método de ayuda que ya creamos
+                actualizarEstadoSpot(ticket.getSpotId(), "FREE");
+                
+                // ⬆️⬆️⬆️ FIN DE LA LÓGICA NUEVA ⬆️⬆️⬆️
+                
+                // Actualizamos el objeto Ticket en Java antes de devolverlo
                 ticket.setFechaSalida(fechaSalidaActual);
                 ticket.setMonto(montoFinal);
                 ticket.setEstado("CERRADO");
@@ -375,6 +401,7 @@ public class GestorParqueo {
                 if (rs.next()) {
                     int id = rs.getInt("id");
                     String areaId = rs.getString("area_id");
+                    String spotId = rs.getString("spot_id"); // ⬅️ LEER spot_id
                     
                     LocalDateTime fechaIngreso = rs.getTimestamp("fecha_ingreso").toLocalDateTime();
                     
@@ -388,7 +415,7 @@ public class GestorParqueo {
                     double monto = rs.getDouble("monto");
                     String estado = rs.getString("estado");
                     
-                    return new Ticket(id, placa, areaId, fechaIngreso, fechaSalida, modo, monto, estado);
+                    return new Ticket(id, placa, areaId, spotId, fechaIngreso, fechaSalida, modo, monto, estado);
                 }
             }
         } catch (Exception e) {
@@ -396,5 +423,92 @@ public class GestorParqueo {
         }
         
         return null;
+    }
+    
+    /**
+     * MÉTODO NUEVO 1:
+     * Busca en la tabla 'spot' el primer espacio LIBRE para un área.
+     * Devuelve el ID del spot (ej. "M03") o null si está lleno.
+     */
+    private String buscarSpotLibre(String areaId) {
+        String sql = "SELECT spot_id FROM spot WHERE area_id = ? AND status = 'FREE' LIMIT 1";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, areaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("spot_id");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // No hay spots libres
+    }
+    
+    /**
+     * MÉTODO NUEVO 2:
+     * Actualiza el estado de un spot (ej. de 'FREE' a 'OCCUPIED')
+     */
+    private void actualizarEstadoSpot(String spotId, String nuevoEstado) {
+        String sql = "UPDATE spot SET status = ? WHERE spot_id = ?";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, nuevoEstado);
+            ps.setString(2, spotId);
+            ps.executeUpdate();
+            
+        } catch (Exception e) {
+        }
+    }
+    
+    /**
+     * MÉTODO NUEVO 3:
+     * Devuelve un mapa con el estado visual de CADA spot.
+     * Key: spot_id (ej: "M01")
+     * Value: "FREE", "OCUPADO_FLAT", "OCUPADO_VARIABLE"
+     * @return 
+     */
+    public Map<String, String> getEstadoVisualSpots() {
+        
+        Map<String, String> mapaEstados = new HashMap<>();
+        
+        // Esta consulta es avanzada. Junta 'spot' y 'ticket' para saber
+        // el estado de cada spot Y el modo del ticket que lo ocupa.
+        String sql = "SELECT " +
+                     "  s.spot_id, " +
+                     "  s.status, " +
+                     "  t.modo " +
+                     "FROM spot s " +
+                     "LEFT JOIN ticket t ON s.spot_id = t.spot_id " +
+                     "  AND t.estado != 'CERRADO' " + // Solo tickets activos
+                     "  AND DATE(t.fecha_ingreso) = CURDATE()"; // Solo de hoy
+
+        try (Connection con = conexion.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String spotId = rs.getString("spot_id");
+                String status = rs.getString("status");
+                String modo = rs.getString("modo"); // Puede ser NULL si está FREE
+
+                if (status.equals("FREE")) {
+                    mapaEstados.put(spotId, "FREE"); // Verde
+                } else {
+                    // Está ocupado. Veamos por qué.
+                    if ("FLAT".equals(modo)) {
+                        mapaEstados.put(spotId, "OCUPADO_FLAT"); // Amarillo (Ya pagó)
+                    } else {
+                        mapaEstados.put(spotId, "OCUPADO_VARIABLE"); // Rojo (Pendiente)
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        
+        return mapaEstados;
     }
 }

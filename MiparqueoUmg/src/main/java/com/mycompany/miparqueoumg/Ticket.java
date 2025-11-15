@@ -12,6 +12,7 @@ public class Ticket {
     private int id;
     private String placa;
     private String areaId; // Ej: "A01"
+    private String spotId; // ⬅️ AÑADIDO: Ej: "A01-001"
     private LocalDateTime fechaIngreso;
     private LocalDateTime fechaSalida;
     private String modo; // "FLAT" o "VARIABLE"
@@ -30,24 +31,27 @@ public class Ticket {
     }
     
     // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-    //      CONSTRUCTOR AÑADIDO
+    //      CONSTRUCTOR AÑADIDO (ACTUALIZADO CON spotId)
     // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
     /**
      * Constructor para RE-CREAR un ticket desde la Base de Datos.
      * @param id
      * @param placa
      * @param areaId
+     * @param spotId ⬅️ AÑADIDO
      * @param fechaIngreso
      * @param fechaSalida
-     * @param monto
      * @param modo
+     * @param monto
      * @param estado
      */
-    public Ticket(int id, String placa, String areaId, LocalDateTime fechaIngreso, 
-                  LocalDateTime fechaSalida, String modo, double monto, String estado) {
+    public Ticket(int id, String placa, String areaId, String spotId,
+                  LocalDateTime fechaIngreso, LocalDateTime fechaSalida, 
+                  String modo, double monto, String estado) {
         this.id = id;
         this.placa = placa;
         this.areaId = areaId;
+        this.spotId = spotId; // ⬅️ AÑADIDO
         this.fechaIngreso = fechaIngreso;
         this.fechaSalida = fechaSalida;
         this.modo = modo;
@@ -78,6 +82,16 @@ public class Ticket {
     
     public void setAreaId(String areaId) {
         this.areaId = areaId;
+    }
+    
+    // ⬅️ AÑADIDO: Getter para spotId
+    public String getSpotId() {
+        return spotId;
+    }
+    
+    // ⬅️ AÑADIDO: Setter para spotId
+    public void setSpotId(String spotId) {
+        this.spotId = spotId;
     }
     
     public LocalDateTime getFechaIngreso() {
