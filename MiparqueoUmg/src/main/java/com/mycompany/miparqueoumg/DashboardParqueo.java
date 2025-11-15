@@ -60,6 +60,9 @@ jComboBox1.addItem("Estudiantes");
         jButton3 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         cmbModoTarifa = new javax.swing.JComboBox<>();
+        jLabel7 = new javax.swing.JLabel();
+        cmbMetodoPago = new javax.swing.JComboBox<>();
+        jButton4 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setName(""); // NOI18N
@@ -105,10 +108,30 @@ jComboBox1.addItem("Estudiantes");
 
         cmbModoTarifa.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Flat", "Variable" }));
 
+        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel7.setText("Metodo de pago:");
+
+        cmbMetodoPago.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Efectivo", "Tarjeta", " " }));
+
+        jButton4.setText("Volver");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 329, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -121,9 +144,13 @@ jComboBox1.addItem("Estudiantes");
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextField1))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cmbModoTarifa, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel7))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmbModoTarifa, 0, 90, Short.MAX_VALUE)
+                            .addComponent(cmbMetodoPago, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel5)
@@ -134,14 +161,10 @@ jComboBox1.addItem("Estudiantes");
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                             .addComponent(jLabel4)
                             .addGap(31, 31, 31)))))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 329, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton4)
+                .addGap(22, 22, 22))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -168,14 +191,20 @@ jComboBox1.addItem("Estudiantes");
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel6)
                                 .addComponent(cmbModoTarifa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 166, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel7)
+                            .addComponent(cmbMetodoPago, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 132, Short.MAX_VALUE)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jButton2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(45, 45, 45))
+                .addGap(5, 5, 5)
+                .addComponent(jButton4)
+                .addGap(17, 17, 17))
         );
 
         pack();
@@ -193,9 +222,9 @@ jComboBox1.addItem("Estudiantes");
     }
 // 3. Obtener el modo seleccionado del ComboBox
 String modo = (String) cmbModoTarifa.getSelectedItem();
-
+String metodoPago = (String) cmbMetodoPago.getSelectedItem();
 // 4. Llamar al cerebro (con el nuevo parámetro)
-String respuesta = gestor.registrarIngreso(placa, area, modo);
+String respuesta = gestor.registrarIngreso(placa, area, modo, metodoPago);
     // 4. Mostrar respuesta
     JOptionPane.showMessageDialog(this, respuesta);
 
@@ -229,6 +258,7 @@ JOptionPane.showMessageDialog(this, respuesta);
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // 1. Obtener datos de la UI
     String placa = jTextField1.getText().toUpperCase().trim();
+    String metodoPago = (String) cmbMetodoPago.getSelectedItem();
     // 2. Validar que la placa no esté vacía
     if (placa.isEmpty()) {
         JOptionPane.showMessageDialog(this, "Debe ingresar una placa.");
@@ -238,8 +268,7 @@ JOptionPane.showMessageDialog(this, respuesta);
 double tarifaVariable = 5.00; // Tu tarifa de Q5.00
 
 // 4. Llamar al cerebro para registrar la salida
-Ticket ticketFinalizado = gestor.registrarSalida(placa, tarifaVariable);
-    
+Ticket ticketFinalizado = gestor.registrarSalida(placa, tarifaVariable, metodoPago);
     // 4. Validar la respuesta
     if (ticketFinalizado == null) {
         // Error
@@ -267,6 +296,12 @@ Ticket ticketFinalizado = gestor.registrarSalida(placa, tarifaVariable);
     }
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+     Parqueo Parqueo = new Parqueo();
+     Parqueo.setVisible(true);
+     this.dispose();
+    }//GEN-LAST:event_jButton4ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -293,10 +328,12 @@ Ticket ticketFinalizado = gestor.registrarSalida(placa, tarifaVariable);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbMetodoPago;
     private javax.swing.JComboBox<String> cmbModoTarifa;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -304,6 +341,7 @@ Ticket ticketFinalizado = gestor.registrarSalida(placa, tarifaVariable);
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JTextField jTextField1;
     // End of variables declaration//GEN-END:variables
 }

@@ -30,9 +30,10 @@ public class GestorParqueo {
      * @param placa
      * @param areaNombre
      * @param modoTarifaActual
+     * @param metodoPago
      * @return 
      */
-    public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual) {
+    public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual, String metodoPago) {
 
         // --- 1. Convertir nombre de área
         String areaId = convertirAreaNombreAId(areaNombre);
@@ -56,7 +57,7 @@ public class GestorParqueo {
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
         // --- 5. Guardar en Base de Datos ---
-        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado) VALUES (?, ?, ?, ?, ?, ?)";        
+        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?)";        
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
@@ -65,7 +66,15 @@ public class GestorParqueo {
             ps.setObject(3, nuevoTicket.getFechaIngreso()); 
             ps.setString(4, nuevoTicket.getModo());
             ps.setDouble(5, nuevoTicket.getMonto());
-            ps.setString(6, nuevoTicket.getEstado());            
+            ps.setString(6, nuevoTicket.getEstado());
+            
+            // Si el modo es FLAT, guardamos el método de pago; si es VARIABLE, guardamos null
+            if (modoTarifaActual.equals("FLAT")) {
+                ps.setString(7, metodoPago);
+            } else {
+                ps.setNull(7, java.sql.Types.VARCHAR);
+            }
+            
             ps.executeUpdate();
             return "Ingreso Registrado (Modo " + modoTarifaActual + "). Monto: Q" + nuevoTicket.getMonto();
             
@@ -125,9 +134,10 @@ public class GestorParqueo {
      * Si hay un error, devuelve null.
      * @param placa
      * @param tarifaVariableConfigurada
+     * @param metodoPago
      * @return 
      */
-    public Ticket registrarSalida(String placa, double tarifaVariableConfigurada) {
+    public Ticket registrarSalida(String placa, double tarifaVariableConfigurada, String metodoPago) {
         // 1. Buscar el ticket activo de la placa
         Ticket ticket = buscarTicketActivo(placa);
         
@@ -164,14 +174,22 @@ public class GestorParqueo {
         }
         
         // 4. Actualizar el ticket en la Base de Datos
-        String sql = "UPDATE ticket SET fecha_salida = ?, monto = ?, estado = 'CERRADO' WHERE id = ?";
+        String sql = "UPDATE ticket SET fecha_salida = ?, monto = ?, estado = 'CERRADO', metodo_pago = ? WHERE id = ?";
         
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setObject(1, fechaSalidaActual);
             ps.setDouble(2, montoFinal);
-            ps.setInt(3, ticket.getId());
+            
+            // Si el modo es VARIABLE, guardamos el método de pago; si es FLAT, no actualizamos
+            if (ticket.getModo().equals("VARIABLE")) {
+                ps.setString(3, metodoPago);
+            } else {
+                ps.setNull(3, java.sql.Types.VARCHAR);
+            }
+            
+            ps.setInt(4, ticket.getId());
             
             int filasAfectadas = ps.executeUpdate();
             
