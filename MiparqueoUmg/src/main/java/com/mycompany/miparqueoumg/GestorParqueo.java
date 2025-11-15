@@ -31,70 +31,73 @@ public class GestorParqueo {
     }  
     
     /**
-     * Este es el método que llamará tu botón "Registrar Ingreso".
-     * @param placa
-     * @param areaNombre
-     * @param modoTarifaActual
-     * @param metodoPago
-     * @return 
+     * MÉTODO "REGISTRAR INGRESO" (VERSIÓN FINAL)
+     * Ahora valida el tipo de vehículo.
      */
     public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual, String metodoPago) {
 
-        // --- 1. Convertir nombre de área
+        // --- 1. Obtener el modo de tarifa actual (del ComboBox) ---
+        // (Ya viene como parámetro)
+
+        // --- 2. Convertir nombre de área
         String areaId = convertirAreaNombreAId(areaNombre);
         if (areaId == null) {
             return "Error: El área seleccionada no es válida.";
         }
-
-        // --- 2. Buscar un Spot Libre ---
-        String spotAsignado = buscarSpotLibre(areaId);
         
-        if (spotAsignado == null) {
-            // Ya no usamos estaAreaLlena(), sino que verificamos si se encontró un spot
-            return "Error: El área de " + areaNombre + " está llena (no hay spots libres).";
+        // --- NUEVA VALIDACIÓN: TIPO DE VEHÍCULO ---
+        String tipoVehiculo = getTipoVehiculoDePlaca(placa);
+        if (tipoVehiculo == null) {
+            return "Error: La placa '" + placa + "' no está registrada en el sistema.";
         }
 
-        // --- 3. Validar si YA EXISTE ---
+        // --- 3. Buscar un Spot Libre (Lógica Corregida) ---
+        String spotAsignado = buscarSpotLibre(areaId, tipoVehiculo);
+        
+        if (spotAsignado == null) {
+            // Ahora sí, este error es correcto
+            return "Error: No hay spots libres para '" + tipoVehiculo + "' en el área de '" + areaNombre + "'.";
+        }
+
+        // --- 4. Validar si YA EXISTE (Lógica de Reingreso) ---
         Ticket ticketExistente = buscarTicketActivo(placa);
         if (ticketExistente != null) {
-            // SI SE ENCUENTRA un ticket, se rechaza el INGRESO.
             return "Error: Esta placa ya tiene un ticket activo. Use el botón 'Reingreso'.";
         }
 
-        // --- 4. Crear Ticket Nuevo ---
+        // --- 5. Crear Ticket Nuevo ---
         Ticket nuevoTicket = new Ticket(placa, areaId, modoTarifaActual);
         
-        // --- 5. Guardar en Base de Datos ---
-        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, spot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";        
+        // --- 6. Guardar en Base de Datos ---
+        String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, spot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        
         try (Connection con = conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, nuevoTicket.getPlaca());
             ps.setString(2, nuevoTicket.getAreaId());
-            ps.setObject(3, nuevoTicket.getFechaIngreso()); 
+            ps.setObject(3, nuevoTicket.getFechaIngreso());
             ps.setString(4, nuevoTicket.getModo());
             ps.setDouble(5, nuevoTicket.getMonto());
             ps.setString(6, nuevoTicket.getEstado());
-            
-            // Si el modo es FLAT, guardamos el método de pago; si es VARIABLE, guardamos null
+
             if (modoTarifaActual.equals("FLAT")) {
                 ps.setString(7, metodoPago);
             } else {
                 ps.setNull(7, java.sql.Types.VARCHAR);
             }
             
-            // Asignar el spotId al ticket (el 8vo '?' en el SQL)
-            ps.setString(8, spotAsignado);
+            ps.setString(8, spotAsignado); // Asignar el spot
             
-            // Ejecutar la inserción del ticket
             ps.executeUpdate();
             
-            // ¡MUY IMPORTANTE! Marcar el spot como ocupado en la tabla 'spot'
+            // Marcar el spot como ocupado
             actualizarEstadoSpot(spotAsignado, "OCCUPIED");
             
-            return "Ingreso Registrado (Modo " + modoTarifaActual + "). Monto: Q" + nuevoTicket.getMonto();
+            return "Ingreso Registrado (Modo " + modoTarifaActual + ") en Spot: " + spotAsignado;
             
         } catch (Exception e) {
+            e.printStackTrace();
             return "Error al guardar en la base de datos: " + e.getMessage();
         }
     }
@@ -313,22 +316,27 @@ public class GestorParqueo {
     }
     
     /**
-     * Actualiza los labels de ocupación en el Dashboard.
+     * (Paso 4.1) Actualiza los JLabels del dashboard con la ocupación.
+     * ¡VERSIÓN CORREGIDA PARA USAR SPOTS!
      * @param lblMotos
      * @param lblEst
      * @param lblCat
      */
     public void actualizarLabelsOcupacion(JLabel lblMotos, JLabel lblEst, JLabel lblCat) {
-        int capMotos = getCapacidadArea("A01");
-        int ocupMotos = getOcupacionActual("A01");
-        lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos);
         
-        int capEstudiantes = getCapacidadArea("A02");
-        int ocupEstudiantes = getOcupacionActual("A02");
+        // Obtenemos los datos para MOTOS (A01)
+        int capMotos = getCapacidadPorSpots("A01");   // <-- CORREGIDO
+        int ocupMotos = getOcupacionPorSpots("A01");  // <-- CORREGIDO
+        lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos); // Ej: "Motos: 0 / 5"
+
+        // Obtenemos los datos para ESTUDIANTES (A02)
+        int capEstudiantes = getCapacidadPorSpots("A02");   // <-- CORREGIDO
+        int ocupEstudiantes = getOcupacionPorSpots("A02");  // <-- CORREGIDO
         lblEst.setText("Estudiantes: " + ocupEstudiantes + " / " + capEstudiantes);
-        
-        int capCatedraticos = getCapacidadArea("A03");
-        int ocupCatedraticos = getOcupacionActual("A03");
+
+        // Obtenemos los datos para CATEDRATICOS (A03)
+        int capCatedraticos = getCapacidadPorSpots("A03");   // <-- CORREGIDO
+        int ocupCatedraticos = getOcupacionPorSpots("A03");  // <-- CORREGIDO
         lblCat.setText("Catedráticos: " + ocupCatedraticos + " / " + capCatedraticos);
     }
     
@@ -426,16 +434,41 @@ public class GestorParqueo {
     }
     
     /**
-     * MÉTODO NUEVO 1:
-     * Busca en la tabla 'spot' el primer espacio LIBRE para un área.
-     * Devuelve el ID del spot (ej. "M03") o null si está lleno.
+     * MÉTODO NUEVO: Busca el tipo de vehículo de una placa
+     * Versión robusta: ignora espacios Y mayúsculas/minúsculas
      */
-    private String buscarSpotLibre(String areaId) {
-        String sql = "SELECT spot_id FROM spot WHERE area_id = ? AND status = 'FREE' LIMIT 1";
+    private String getTipoVehiculoDePlaca(String placa) {
+        // DESPUÉS (Corregido con `backticks` y guion):
+        String sql = "SELECT `tipo-vehiculo` FROM vehiculos WHERE TRIM(UPPER(placa)) = TRIM(UPPER(?))";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, placa);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // DESPUÉS (Corregido con guion):
+                    return rs.getString("tipo-vehiculo");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // Placa no encontrada
+    }
+    
+    /**
+     * MÉTODO CORREGIDO:
+     * Busca un spot libre para un ÁREA y un TIPO DE VEHÍCULO
+     */
+    private String buscarSpotLibre(String areaId, String tipoVehiculo) {
+        // DESPUÉS (Corregido con `backticks` y guion):
+        String sql = "SELECT spot_id FROM spot WHERE area_id = ? AND `tipo-vehiculo` = ? AND status = 'FREE' LIMIT 1";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, areaId);
+            ps.setString(2, tipoVehiculo); // <-- Esta línea está bien, no necesita cambios
+            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getString("spot_id");
@@ -444,7 +477,7 @@ public class GestorParqueo {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null; // No hay spots libres
+        return null; // No hay spots libres para ESE tipo de vehículo
     }
     
     /**
@@ -461,6 +494,7 @@ public class GestorParqueo {
             ps.executeUpdate();
             
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     
@@ -507,8 +541,49 @@ public class GestorParqueo {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
         
         return mapaEstados;
+    }
+    
+    /**
+     * (CONTEO NUEVO) Devuelve la capacidad MÁXIMA de un área contando sus spots.
+     * @param areaId
+     * @return 
+     */
+    public int getCapacidadPorSpots(String areaId) {
+        String sql = "SELECT COUNT(*) FROM spot WHERE area_id = ?";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, areaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1); // Devolverá 5
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+    
+    /**
+     * (CONTEO NUEVO) Devuelve la ocupación ACTUAL de un área contando sus spots 'OCCUPIED'.
+     * @param areaId
+     * @return 
+     */
+    public int getOcupacionPorSpots(String areaId) {
+        String sql = "SELECT COUNT(*) FROM spot WHERE area_id = ? AND status = 'OCCUPIED'";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, areaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1); // Devolverá 0, 1, 2, etc.
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
     }
 }

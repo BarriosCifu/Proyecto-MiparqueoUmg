@@ -35,9 +35,9 @@ jComboBox1.addItem("Estudiantes");
     public final void actualizarOcupacion() {
         // Aquí actualizas los labels según la ocupación
         // Ejemplo:
-        jLabel3.setText("Motos: " + gestor.getOcupacionMotos() + "/120");
-        jLabel4.setText("Estudiantes: " + gestor.getOcupacionEstudiantes() + "/220");
-        jLabel5.setText("Catedraticos: " + gestor.getOcupacionCatedraticos() + "/60");
+        jLabel3.setText("Motos: " + gestor.getOcupacionMotos() + "/5");
+        jLabel4.setText("Estudiantes: " + gestor.getOcupacionEstudiantes() + "/5");
+        jLabel5.setText("Catedraticos: " + gestor.getOcupacionCatedraticos() + "/5");
     }
 
     /**
