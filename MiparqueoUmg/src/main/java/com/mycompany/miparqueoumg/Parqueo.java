@@ -11,7 +11,6 @@ import javax.swing.JFrame;
 public class Parqueo extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Parqueo.class.getName());
-// ¡AQUÍ CREAMOS EL CEREBRO UNA SOLA VEZ!
     public final GestorParqueo gestorPrincipal = new GestorParqueo();
 
     public Parqueo() {
@@ -80,6 +79,11 @@ public class Parqueo extends javax.swing.JFrame {
 
         btnReportes.setBackground(new java.awt.Color(255, 102, 51));
         btnReportes.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnReportes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnReportesActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -150,6 +154,12 @@ DashboardParqueo DashboardParqueo;
 DashboardParqueo.setVisible(true);
 this.dispose();
     }//GEN-LAST:event_panelActionPerformed
+
+    private void btnReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReportesActionPerformed
+Reportes Reportes = new Reportes();
+Reportes.setVisible(true);
+this.dispose();
+    }//GEN-LAST:event_btnReportesActionPerformed
 //<editor-fold defaultstate="collapsed" desc="/*comment*/">
     
     /**

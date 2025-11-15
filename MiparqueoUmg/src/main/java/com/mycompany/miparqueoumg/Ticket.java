@@ -8,16 +8,16 @@ import java.time.LocalDateTime;
 public class Ticket {
     private int id;
     private String placa;
-    private String areaId; // Ej: "A01"
-    private String spotId; // Ej: "A01-001"
+    private String areaId; 
+    private String spotId; 
     private LocalDateTime fechaIngreso;
     private LocalDateTime fechaSalida;
     private String modo; // "FLAT" o "VARIABLE"
     private double monto;
-    private String estado; // "ACTIVO", "PAGADO", "CERRADO"
+    private String estado; 
     private long horas; // No es de la BD, es temporal para el recibo
     
-    // --- Constructor para tickets NUEVOS (CORREGIDO) ---
+    
     /**
      * Constructor para crear un ticket nuevo al momento del ingreso.
      * @param placa Placa del vehículo
@@ -31,11 +31,11 @@ public class Ticket {
         this.spotId = spotId;
         this.modo = modo;
         this.fechaIngreso = LocalDateTime.now();
-        this.estado = (modo.equalsIgnoreCase("FLAT")) ? "PAGADO" : "ACTIVO"; // ✅ CORREGIDO
-        this.monto = (modo.equalsIgnoreCase("FLAT")) ? 10.00 : 0.00; // ✅ CORREGIDO
+        this.estado = (modo.equalsIgnoreCase("FLAT")) ? "PAGADO" : "ACTIVO"; 
+        this.monto = (modo.equalsIgnoreCase("FLAT")) ? 10.00 : 0.00; 
     }
     
-    // --- Constructor para RE-CREAR un ticket desde la Base de Datos ---
+ 
     /**
      * Constructor completo para recrear un ticket desde la BD.
      * @param id ID del ticket
@@ -61,8 +61,7 @@ public class Ticket {
         this.monto = monto;
         this.estado = estado;
     }
-    
-    // --- Getters y Setters ---
+
     public int getId() {
         return id;
     }

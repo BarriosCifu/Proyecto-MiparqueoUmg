@@ -1,7 +1,4 @@
 package com.mycompany.miparqueoumg;
-import java.util.Map;
-import java.util.HashMap;
-import java.sql.Statement;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -31,8 +28,6 @@ public class GestorParqueo {
     }  
     
     /**
-     * MÉTODO "REGISTRAR INGRESO" (VERSIÓN CORREGIDA)
-     * Ahora valida el tipo de vehículo y asigna correctamente el spotId.
      * @param placa
      * @param areaNombre
      * @param modoTarifaActual
@@ -40,40 +35,29 @@ public class GestorParqueo {
      * @return 
      */
     public String registrarIngreso(String placa, String areaNombre, String modoTarifaActual, String metodoPago) {
-
-        // --- 1. Obtener el modo de tarifa actual (del ComboBox) ---
-        // (Ya viene como parámetro)
-
-        // --- 2. Convertir nombre de área
         String areaId = convertirAreaNombreAId(areaNombre);
         if (areaId == null) {
             return "Error: El área seleccionada no es válida.";
         }
-        
-        // --- NUEVA VALIDACIÓN: TIPO DE VEHÍCULO ---
+       
         String tipoVehiculo = getTipoVehiculoDePlaca(placa);
         if (tipoVehiculo == null) {
             return "Error: La placa '" + placa + "' no está registrada en el sistema.";
-        }
-
-        // --- 3. Buscar un Spot Libre (Lógica Corregida) ---
+        }   
         String spotAsignado = buscarSpotLibre(areaId, tipoVehiculo);
         
         if (spotAsignado == null) {
-            // Ahora sí, este error es correcto
             return "Error: No hay spots libres para '" + tipoVehiculo + "' en el área de '" + areaNombre + "'.";
         }
 
-        // --- 4. Validar si YA EXISTE (Lógica de Reingreso) ---
+   
         Ticket ticketExistente = buscarTicketActivo(placa);
         if (ticketExistente != null) {
             return "Error: Esta placa ya tiene un ticket activo. Use el botón 'Reingreso'.";
         }
 
-        // --- 5. Crear Ticket Nuevo (CORREGIDO) ---
         Ticket nuevoTicket = new Ticket(placa, areaId, spotAsignado, modoTarifaActual); // ⬅️ AÑADIDO spotAsignado
         
-        // --- 6. Guardar en Base de Datos ---
         String sql = "INSERT INTO ticket (placa, area_id, fecha_ingreso, modo, monto, estado, metodo_pago, `spot-id`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection con = conexion.getConnection(); 
@@ -92,11 +76,10 @@ public class GestorParqueo {
                 ps.setNull(7, java.sql.Types.VARCHAR);
             }
             
-            ps.setString(8, spotAsignado); // Parámetro 8 es spot-id
+            ps.setString(8, spotAsignado); 
             
             ps.executeUpdate();
-            
-            // Marcar el spot como ocupado
+       
             actualizarEstadoSpot(spotAsignado, "OCCUPIED");
             
             return "Ingreso Registrado (Modo " + modoTarifaActual + ") en Spot: " + spotAsignado;
@@ -108,41 +91,35 @@ public class GestorParqueo {
     }
     
     /**
-     * Valida un reingreso basado en las reglas del PDF.
-     * Este método es llamado por el botón "Reingreso".
      * @param placa
      * @param modoTarifaActual
      * @return 
      */
     public String registrarReingreso(String placa, String modoTarifaActual) {
-        // 1. Buscar el ticket
+      
         Ticket ticketExistente = buscarTicketActivo(placa);
         
-        // 2. Validar si NO se encontró
+     
         if (ticketExistente == null) {
             return "Error: No se encontró ticket activo para la placa. Use el botón 'Ingreso'.";
         }
-        
-        // 3. Aplicar reglas de reingreso del PDF
-        
-        // REGLA PARA TARIFA PLANA
+       
         if (modoTarifaActual.equalsIgnoreCase("FLAT")) {
-            // Comprobar que el ticket sea FLAT y del mismo día
+         
             if (ticketExistente.getModo().equalsIgnoreCase("FLAT") && 
                 ticketExistente.getFechaIngreso().toLocalDate().isEqual(LocalDate.now())) {
-                // ¡Éxito! Se permite el reingreso
+              
                 return "Reingreso (Tarifa Plana) PERMITIDO. (Ticket del día)";
             } else {
                 return "Rechazado: El ticket (PLANA) no es válido para reingreso hoy.";
             }
         }
-        
-        // REGLA PARA TARIFA VARIABLE
+   
         if (modoTarifaActual.equalsIgnoreCase("VARIABLE")) {
-            // Comprobar que el ticket (VARIABLE) siga "ACTIVO"
+            
             if (ticketExistente.getModo().equalsIgnoreCase("VARIABLE") && 
                 ticketExistente.getEstado().equalsIgnoreCase("ACTIVO")) {
-                // ¡Éxito! El ticket sigue abierto
+    
                 return "Reingreso (Tarifa Variable) PERMITIDO. (Ticket sigue activo)";
             } else {
                 return "Rechazado: El ticket (VARIABLE) no está activo.";
@@ -153,19 +130,14 @@ public class GestorParqueo {
     }
     
     /**
-     * Procesa la salida de un vehículo.
-     * Calcula el monto, actualiza la BD y devuelve el ticket finalizado.
-     * Si hay un error, devuelve null.
      * @param placa
      * @param tarifaVariableConfigurada
      * @param metodoPago
      * @return 
      */
     public Ticket registrarSalida(String placa, double tarifaVariableConfigurada, String metodoPago) {
-        // 1. Buscar el ticket activo de la placa
         Ticket ticket = buscarTicketActivo(placa);
-        
-        // 2. Validar si no se encontró
+  
         if (ticket == null) {
             System.err.println("Error: No se encontró ticket activo para la placa: " + placa);
             return null;
@@ -174,8 +146,7 @@ public class GestorParqueo {
         LocalDateTime fechaSalidaActual = LocalDateTime.now();
         double montoFinal = 0.0;
         long horasTranscurridas = 0;
-        
-        // 3. Aplicar lógica de cobro según el MODO del TICKET
+   
         switch (ticket.getModo().toUpperCase()) {
             case "FLAT" -> // En Tarifa Plana, el monto ya está pagado. Solo se cierra.
                 montoFinal = ticket.getMonto(); // Debería ser 10.00
@@ -196,8 +167,7 @@ public class GestorParqueo {
                 return null;
             }
         }
-        
-        // 4. Actualizar el ticket en la Base de Datos
+      
         String sql = "UPDATE ticket SET fecha_salida = ?, monto = ?, estado = 'CERRADO', metodo_pago = ? WHERE id = ?";
         
         try (Connection con = conexion.getConnection();
@@ -205,8 +175,7 @@ public class GestorParqueo {
             
             ps.setObject(1, fechaSalidaActual);
             ps.setDouble(2, montoFinal);
-            
-            // Si el modo es VARIABLE, guardamos el método de pago; si es FLAT, no actualizamos
+       
             if (ticket.getModo().equalsIgnoreCase("VARIABLE")) {
                 ps.setString(3, metodoPago);
             } else {
@@ -218,20 +187,18 @@ public class GestorParqueo {
             int filasAfectadas = ps.executeUpdate();
             
             if (filasAfectadas > 0) {
-                // ¡Éxito! El ticket se actualizó a "CERRADO"
-                
-                // Liberar el spot en la tabla 'spot'
+               
                 actualizarEstadoSpot(ticket.getSpotId(), "FREE");
                 
-                // Actualizamos el objeto Ticket en Java antes de devolverlo
+           
                 ticket.setFechaSalida(fechaSalidaActual);
                 ticket.setMonto(montoFinal);
                 ticket.setEstado("CERRADO");
                 ticket.setHoras(horasTranscurridas);
                 
-                return ticket; // Devolvemos el ticket completo
+                return ticket; 
             } else {
-                return null; // No se pudo actualizar
+                return null; 
             }
             
         } catch (Exception e) {
@@ -241,7 +208,6 @@ public class GestorParqueo {
     }
     
     /**
-     * Genera un PDF con el recibo del ticket.
      * @param ticket
      * @return 
      */
@@ -308,8 +274,7 @@ public class GestorParqueo {
             return "Error al generar PDF: " + e.getMessage();
         }
     }
-    
-    // --- Métodos de Ayuda ---
+
     private String convertirAreaNombreAId(String nombre) {
         if (nombre.equals("Motos")) return "A01";
         if (nombre.equals("Estudiantes")) return "A02";
@@ -319,24 +284,19 @@ public class GestorParqueo {
     }
     
     /**
-     * Actualiza los JLabels del dashboard con la ocupación.
      * @param lblMotos
      * @param lblEst
      * @param lblCat
      */
     public void actualizarLabelsOcupacion(JLabel lblMotos, JLabel lblEst, JLabel lblCat) {
-        
-        // Obtenemos los datos para MOTOS (A01)
         int capMotos = getCapacidadPorSpots("A01");
         int ocupMotos = getOcupacionPorSpots("A01");
         lblMotos.setText("Motos: " + ocupMotos + " / " + capMotos);
 
-        // Obtenemos los datos para ESTUDIANTES (A02)
         int capEstudiantes = getCapacidadPorSpots("A02");
         int ocupEstudiantes = getOcupacionPorSpots("A02");
         lblEst.setText("Estudiantes: " + ocupEstudiantes + " / " + capEstudiantes);
 
-        // Obtenemos los datos para CATEDRATICOS (A03)
         int capCatedraticos = getCapacidadPorSpots("A03");
         int ocupCatedraticos = getOcupacionPorSpots("A03");
         lblCat.setText("Catedraticos: " + ocupCatedraticos + " / " + capCatedraticos);
@@ -397,11 +357,7 @@ public class GestorParqueo {
         int capacidad = getCapacidadArea(areaId);
         return ocupacion >= capacidad;
     }
-    
-    /**
-     * MÉTODO "BUSCAR TICKET ACTIVO" (YA CORREGIDO)
-     * Lee todas las columnas, incluyendo las que tienen guiones.
-     */
+
     private Ticket buscarTicketActivo(String placa) {
         String sql = "SELECT * FROM ticket WHERE placa = ? AND estado != 'CERRADO' " +
                      "ORDER BY fecha_ingreso DESC LIMIT 1";
@@ -498,10 +454,6 @@ public class GestorParqueo {
         }
     }
     
-    /**
-     * Devuelve un mapa con el estado visual de CADA spot.
-     * @return 
-     */
     public Map<String, String> getEstadoVisualSpots() {
         
         Map<String, String> mapaEstados = new HashMap<>();
@@ -542,7 +494,6 @@ public class GestorParqueo {
     }
     
     /**
-     * Devuelve la capacidad MÁXIMA de un área contando sus spots.
      * @param areaId
      * @return 
      */
@@ -564,7 +515,6 @@ public class GestorParqueo {
     }
     
     /**
-     * Devuelve la ocupación ACTUAL de un área contando sus spots 'OCCUPIED'.
      * @param areaId
      * @return 
      */

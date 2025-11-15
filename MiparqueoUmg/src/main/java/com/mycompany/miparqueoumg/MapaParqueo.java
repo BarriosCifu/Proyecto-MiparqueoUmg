@@ -34,7 +34,6 @@ public MapaParqueo(Map<String, String> mapaDeEstados) {
  * Pinta los 15 botones según el mapa de estados.
  */
 private void actualizarColores(Map<String, String> mapa) {
-    // Un arreglo de todos tus botones. ¡Asegúrate que los nombres coincidan!
     JButton[] botones = {
         btnM01, btnM02, btnM03, btnM04, btnM05,
         btnE01, btnE02, btnE03, btnE04, btnE05,
@@ -53,10 +52,9 @@ private void actualizarColores(Map<String, String> mapa) {
                 boton.setBackground(new Color(204, 0, 0)); // Rojo Oscuro
             default -> boton.setBackground(Color.GRAY); // Error
         }
-        // Para que el color se vea bien
         boton.setOpaque(true);
         boton.setBorderPainted(false);
-        boton.setForeground(Color.WHITE); // Letras blancas
+        boton.setForeground(Color.WHITE); 
     }
 }
 

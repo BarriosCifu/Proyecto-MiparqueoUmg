@@ -254,20 +254,20 @@ public class CargaArchivos extends javax.swing.JFrame {
     private void leerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_leerActionPerformed
 JFileChooser fileChooser = new JFileChooser();
 fileChooser.setDialogTitle("Selecciona un archivo de áreas");
-// Mostrar el diálogo y capturar el resultado
+
 int resultado = fileChooser.showOpenDialog(this);
 if (resultado == JFileChooser.APPROVE_OPTION) {
-// Obtener el archivo seleccionado
+
 File archivoSeleccionado = fileChooser.getSelectedFile();
 String ruta = archivoSeleccionado.getAbsolutePath();
-// Lista donde guardaremos los datos leídos
+
 List<String[]> datos = new ArrayList<>();
-// Leer archivo
+
     try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
         String linea;
         while ((linea = br.readLine()) != null) {
             if (linea.trim().isEmpty()) continue;
-            // Usa "\\|" si tu separador es un pipe
+       
             String[] partes = linea.split(","); 
             if (partes.length == 4) {
                 datos.add(new String[]{
@@ -284,9 +284,9 @@ List<String[]> datos = new ArrayList<>();
                 "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    // Mostrar en la tabla
+  
     DefaultTableModel modelo = (DefaultTableModel) areas.getModel();
-    modelo.setRowCount(0); // Limpiar tabla
+    modelo.setRowCount(0); 
     for (String[] fila : datos) {
         modelo.addRow(fila);
     }
@@ -297,15 +297,15 @@ List<String[]> datos = new ArrayList<>();
     private void leer2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_leer2ActionPerformed
 JFileChooser fileChooser = new JFileChooser();
 fileChooser.setDialogTitle("Selecciona un archivo de spot");
-// Mostrar el diálogo y capturar el resultado
+
 int resultado = fileChooser.showOpenDialog(this);
 if (resultado == JFileChooser.APPROVE_OPTION) {
-// Obtener el archivo seleccionado
+
 File archivoSeleccionado = fileChooser.getSelectedFile();
 String ruta = archivoSeleccionado.getAbsolutePath();
-// Lista donde guardaremos los datos leídos
+
 List<String[]> datos = new ArrayList<>();
-// Leer archivo
+
     try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
         String linea;
         while ((linea = br.readLine()) != null) {
@@ -327,10 +327,10 @@ List<String[]> datos = new ArrayList<>();
                 "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    // Mostrar en la tabla
+
     DefaultTableModel modelo;
     modelo = (DefaultTableModel) spots.getModel();
-    modelo.setRowCount(0); // Limpiar tabla
+    modelo.setRowCount(0); 
     for (String[] fila : datos) {
         modelo.addRow(fila);
     }
@@ -341,15 +341,15 @@ List<String[]> datos = new ArrayList<>();
     private void leer3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_leer3ActionPerformed
 JFileChooser fileChooser = new JFileChooser();
 fileChooser.setDialogTitle("Selecciona un archivo de vehiculos");
-// Mostrar el diálogo y capturar el resultado
+
 int resultado = fileChooser.showOpenDialog(this);
 if (resultado == JFileChooser.APPROVE_OPTION) {
-// Obtener el archivo seleccionado
+
 File archivoSeleccionado = fileChooser.getSelectedFile();
 String ruta = archivoSeleccionado.getAbsolutePath();
-// Lista donde guardaremos los datos leídos
+
 List<String[]> datos = new ArrayList<>();
-// Leer archivo
+
     try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
         String linea;
         while ((linea = br.readLine()) != null) {
@@ -370,10 +370,10 @@ List<String[]> datos = new ArrayList<>();
                 "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    // Mostrar en la tabla
+  
     DefaultTableModel modelo;
     modelo = (DefaultTableModel) vehiculos.getModel();
-    modelo.setRowCount(0); // Limpiar tabla
+    modelo.setRowCount(0); 
     for (String[] fila : datos) {
         modelo.addRow(fila);
     }
@@ -397,64 +397,59 @@ JOptionPane.showMessageDialog(this,
 JOptionPane.ERROR_MESSAGE);
 return;
 }
-// 2. Variables de Conexión (Arregla 'cannot find symbol: url', etc.)
-// ⚠️ ¡DEBES CAMBIAR LA CONTRASEÑA!
+
 String url = "jdbc:mysql://localhost:3306/miparqueoumg";
-String usuario = "root"; // O tu usuario de MySQL
-String contrasena = ""; // ⬅️ PON TU CONTRASEÑA AQUÍ
+String usuario = "root"; 
+String contrasena = ""; 
 String sql = "INSERT INTO `areas` (`area-id`, `nombre`, `capacidad`, `tipo-vehiculo`) VALUES (?, ?, ?, ?)";
 Connection con = null;
 PreparedStatement ps = null;
 try {
-    // 4. Conectar
+   
     con = DriverManager.getConnection(url, usuario, contrasena);
-    con.setAutoCommit(false); // Para ejecutar como lote  
-    // 5. Preparar la consulta
+    con.setAutoCommit(false);  
+ 
     ps = con.prepareStatement(sql);
-    // 6. Recorrer la JTable
+  
     for (int i = 0; i < totalFilas; i++) {       
-        // Obtener datos de la JTable
+ 
         String idStr = modelo.getValueAt(i, 0).toString();
         String nombre = modelo.getValueAt(i, 1).toString();
         String capacidadStr = modelo.getValueAt(i, 2).toString();
         String tipoVehiculo = modelo.getValueAt(i, 3).toString();
-        // 7. Convertir datos (Arregla 'NumberFormatException')
-        int capacidad = Integer.parseInt(capacidadStr); // Solo convertimos capacidad
-        // 8. Asignar valores a la consulta (?)
-        ps.setString(1, idStr); // ⬅️ CORREGIDO: Usamos setString para "A01"
+        int capacidad = Integer.parseInt(capacidadStr);        
+        ps.setString(1, idStr); 
         ps.setString(2, nombre);
         ps.setInt(3, capacidad);
         ps.setString(4, tipoVehiculo);       
-        ps.addBatch(); // Añadir al lote
+        ps.addBatch(); 
     }
-    // 10. Ejecutar todo el lote
     int[] resultados = ps.executeBatch();   
-    // 11. Confirmar la transacción
     con.commit(); 
     JOptionPane.showMessageDialog(this, 
             "Se cargaron exitosamente " + resultados.length + " registros.", 
             "Carga Exitosa", 
             JOptionPane.INFORMATION_MESSAGE);
 } catch (NumberFormatException e) {
-    // Error si "capacidad" no es un número
+   
     JOptionPane.showMessageDialog(this, 
             "Error en los datos de la tabla.\n'capacidad' debe ser un número.\n" + e.getMessage(), 
             "Error de Formato", 
             JOptionPane.ERROR_MESSAGE); 
 } catch (SQLException e) {
-    // Error de Base de Datos (conexión, consulta, etc.)
+   
     JOptionPane.showMessageDialog(this, 
             "Error al guardar en la base de datos:\n" + e.getMessage(), 
             "Error de SQL", 
             JOptionPane.ERROR_MESSAGE);
-    // Si algo falló, revertir la transacción
+ 
     try {
         if (con != null) con.rollback();
     } catch (SQLException ex) {
-        // Muestra error en consola   
+   
     }     
 } finally {
-    // 12. Cerrar la conexión (MUY IMPORTANTE)
+ 
     try {
         if (ps != null) ps.close();
         if (con != null) {
@@ -462,7 +457,7 @@ try {
             con.close();
         }
     } catch (SQLException e) {
-        // Muestra error en consola
+
     }
 }
     }//GEN-LAST:event_cargarActionPerformed

@@ -139,7 +139,6 @@ public class Login extends javax.swing.JFrame {
        Registrar Registrar = new Registrar();
        Registrar.setLocationRelativeTo(null);
        Registrar.setVisible(true);
-    // (Opcional) Cierra el formulario actual
     this.dispose(); 
     }//GEN-LAST:event_jButton2ActionPerformed
 int intentos = 0;
@@ -148,23 +147,20 @@ String Varusuario, Varcontraseña;
 Varusuario = user.getText().trim();
 Varcontraseña = contra.getText();
 
-// Validar que los campos no estén vacíos
 if (Varusuario.isEmpty() || Varcontraseña.isEmpty()) {
     JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
     return;
 }
 
-// VERIFICAR EN BASE DE DATOS
 Connection con = null;
 PreparedStatement pst = null;
 ResultSet rs = null;
 
 try {
-    // Conexión a la base de datos
+ 
     Class.forName("com.mysql.cj.jdbc.Driver");
     con = DriverManager.getConnection("jdbc:mysql://localhost:3306/miparqueoumg", "root", "");
-    
-    // Buscar usuario en la base de datos
+   
     String sql = "SELECT * FROM login WHERE usuario = ? AND contraseña = ?";
     pst = con.prepareStatement(sql);
     pst.setString(1, Varusuario);
@@ -172,17 +168,16 @@ try {
     rs = pst.executeQuery();
     
     if (rs.next()) {
-        // Login exitoso
+     
         JOptionPane.showMessageDialog(null, "Bienvenido " + Varusuario, "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
-        intentos = 0; // Reiniciar intentos
-        
-        // Cerrar ventana actual y abrir la siguiente
+        intentos = 0; 
+    
         this.dispose();
         Parqueo parqueo = new Parqueo();
         parqueo.setVisible(true);
         
     } else {
-        // Usuario o contraseña incorrectos
+    
         intentos++;
         
         if (intentos >= 3) {
@@ -214,12 +209,12 @@ try {
 }       catch (SQLException ex) {
             System.getLogger(Login.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         } finally {
-    // Cerrar conexiones
+ 
     try {
         if (rs != null) rs.close();
         if (pst != null) pst.close();
         if (con != null) con.close();
-    } catch (Exception e) {
+    } catch (SQLException e) {
     }
 }
     }//GEN-LAST:event_jButton1ActionPerformed
